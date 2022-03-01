@@ -2,26 +2,45 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Reference: https://www.redblobgames.com/grids/hexagons
 public class HexCoordinates : MonoBehaviour
 {
-    const float offsetX = 0.5f;
-    const float offsetZ = 0.866f;
+    private static float offsetX = 0.5f, offsetZ = 0.866f;
 
-    public int q = 0, s = 0, r = 0;
+    [Header("Offset Coordinates")]
+    [SerializeField]
+    private Vector3Int offsetCoordinates;
 
-    // Start is called before the first frame update
-    void Start()
+    [Header("Tile Position")]
+    [SerializeField]
+    private Vector3 hexTilePosition;
+
+    public Vector3Int GetHexCoordinates() => offsetCoordinates;
+    public Vector3 GetTilePosition() => hexTilePosition;
+
+    void Awake()
     {
-        int ratioR = Mathf.RoundToInt(transform.position.z / offsetZ);
-
-        r = -1 * ratioR;
-        q = Mathf.RoundToInt(transform.position.x + ratioR * offsetX);
-        s = 0 - q - r;
+        offsetCoordinates = ConvertToOffsetCoordinates(transform.position);
+        hexTilePosition = ConvertToPosition(offsetCoordinates);
     }
 
-    // Update is called once per frame
-    void Update()
+    private Vector3Int ConvertToOffsetCoordinates(Vector3 position)
+    {    
+        int ratioR = Mathf.RoundToInt(transform.position.z / offsetZ);
+
+        int r = -1 * ratioR;
+        int q = Mathf.RoundToInt(transform.position.x + ratioR * offsetX);
+        int s = 0 - q - r;
+
+        return new Vector3Int(q, s, r);
+    }
+
+    private Vector3 ConvertToPosition(Vector3Int offsetCoordinates)
     {
-        
+        float y = 0f;   // default
+        float z = -1f * offsetCoordinates.z /* r */ * offsetZ;
+        float x = offsetCoordinates.x /* q */ + offsetCoordinates.z /* r */ * offsetX;
+
+        return new Vector3(x, y, z);
     }
 }
