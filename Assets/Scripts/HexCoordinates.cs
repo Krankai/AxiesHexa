@@ -18,6 +18,14 @@ public class HexCoordinates : MonoBehaviour
     public Vector3Int GetHexCoordinates() => offsetCoordinates;
     public Vector3 GetTilePosition() => hexTilePosition;
 
+    public void SetHexCoordinates(Vector3Int hexCoordinates)
+    {
+        offsetCoordinates = hexCoordinates;
+        hexTilePosition = ConvertToPosition(hexCoordinates);
+
+        transform.Translate(hexTilePosition);
+    }
+
     void Awake()
     {
         offsetCoordinates = ConvertToOffsetCoordinates(transform.position);

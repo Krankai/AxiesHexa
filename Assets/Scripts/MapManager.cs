@@ -8,11 +8,12 @@ public class MapManager : MonoBehaviour
     private GameObject tilePrefab;
     public int ring = 2;
 
-    private HexGrid map;
+    private HexGrid grid;
+    private int minRing = 4;
 
     void Awake()
     {
-        map = GetComponent<HexGrid>();
+        grid = GetComponent<HexGrid>();
     }
 
     // Start is called before the first frame update
@@ -37,13 +38,21 @@ public class MapManager : MonoBehaviour
         if (!tilePrefab) return false;
 
         // Center
-        Instantiate(tilePrefab, new Vector3Int(0, 0, 0), Quaternion.identity);
+        Instantiate(tilePrefab, HexGrid.center, Quaternion.identity);
 
-        // ... Add more (hex) tiles here
-
+        // Rings
+        for (int i = 1, limit = ring > minRing ? ring : minRing; i <= limit; ++i)
+        {
+            foreach (Vector3Int hexCoordinates in grid.GetHexesOnRing(i))
+            {
+                GameObject tileObject = Instantiate(tilePrefab, HexGrid.center, Quaternion.identity);
+                HexCoordinates hexCoord = tileObject.GetComponent<HexCoordinates>();
+                hexCoord.SetHexCoordinates(hexCoordinates);
+            }
+        }
 
         // Save all tiles into grid
-        map.Init();
+        grid.UpdateTiles();
 
         return true;
     }
