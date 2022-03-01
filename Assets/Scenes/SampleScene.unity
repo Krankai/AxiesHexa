@@ -138,7 +138,7 @@ GameObject:
   m_Component:
   - component: {fileID: 38419820}
   m_Layer: 0
-  m_Name: Ground
+  m_Name: Ground_Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1201,7 +1201,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0481e56a73bcc484ea1cd851eb96656b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tilePrefab: {fileID: 1943117728638778, guid: 88f49b35c66aba045bfe99e010eb78ab, type: 3}
+  defenseTilePrefab: {fileID: 1943117728638778, guid: 88f49b35c66aba045bfe99e010eb78ab, type: 3}
+  attackTilePrefab: {fileID: 1943117728638778, guid: 83ec1435dfe1a7640b51045f00a97eba, type: 3}
+  barrierTilePrefab: {fileID: 1343071931556646, guid: 1ea65ce7fef5dbd4b9ff7d688ea90cd8, type: 3}
   ring: 1
 --- !u!4 &1419430203 stripped
 Transform:
