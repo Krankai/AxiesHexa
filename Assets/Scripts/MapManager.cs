@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class MapManager : MonoBehaviour
 {
+    [Header("Object")]
     public GameObject tilesGroup;
     [SerializeField]
     private GameObject defenseTilePrefab;
@@ -11,7 +12,10 @@ public class MapManager : MonoBehaviour
     private GameObject attackTilePrefab;
     [SerializeField]
     private GameObject barrierTilePrefab;
-    public int ring = 4;
+
+    [Header("Attributes")]
+    public float tileScaleFactor = 1f;
+    public int numberOfRings = 2;
 
     private HexGrid grid;
     private int minRing = 4;
@@ -29,7 +33,7 @@ public class MapManager : MonoBehaviour
         //     Instantiate(tilePrefab, new Vector3Int(4, 0, 4), Quaternion.identity);
         // }
 
-        GenerateTiles();
+        //GenerateTiles();
     }
 
     // Update is called once per frame
@@ -43,16 +47,17 @@ public class MapManager : MonoBehaviour
         // Center - use defense tile (always)
         if (defenseTilePrefab)
         {
-            GameObject centerObject = Instantiate(defenseTilePrefab, HexGrid.center, Quaternion.identity);
+            GameObject centerTileObject = Instantiate(defenseTilePrefab, HexGrid.center, Quaternion.identity);
+            centerTileObject.transform.localScale *= tileScaleFactor;      // apply scale
 
             // Add to group
             if (tilesGroup)
             {
-                centerObject.transform.parent = tilesGroup.transform;
+                centerTileObject.transform.parent = tilesGroup.transform;
             }
         }
 
-        int numGeneratedRings = ring > minRing ? ring : minRing;
+        int numGeneratedRings = numberOfRings > minRing ? numberOfRings : minRing;
 
         // Determine number of rings for each prefab type: defense, attack, barrier
         int numBarrierRings = 1;     // default;
@@ -85,6 +90,8 @@ public class MapManager : MonoBehaviour
                 if (usedTilePrefab)
                 {
                     GameObject tileObject = Instantiate(usedTilePrefab, HexGrid.center, Quaternion.identity);
+                    tileObject.transform.localScale *= tileScaleFactor;      // apply scale
+
                     HexCoordinates hexCoord = tileObject.GetComponent<HexCoordinates>();
                     hexCoord.SetHexCoordinates(hexCoordinates);
 
