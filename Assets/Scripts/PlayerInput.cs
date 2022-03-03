@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerInput : MonoBehaviour
 {
-    public AxiesSpineModel testModel;
+    public SpineAxieModel testModel;
 
     void OnValidate()
     {
@@ -16,7 +16,7 @@ public class PlayerInput : MonoBehaviour
     {
         if (testModel == null)
         {
-            testModel = GetComponent<AxiesSpineModel>();
+            testModel = GetComponent<SpineAxieModel>();
         }
     }
 

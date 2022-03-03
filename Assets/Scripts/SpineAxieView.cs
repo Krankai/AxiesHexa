@@ -3,14 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AxiesSpineView : MonoBehaviour
+public class SpineAxieView : MonoBehaviour
 {
     [Header("Components")]
-    public AxiesSpineModel model;
+    public SpineAxieModel model;
     public SkeletonAnimation skeletonAnimation;
     public AnimationReferenceAsset idle, move, attack, die;
 
-    AxiesSpineModelState previousViewState;
+    SpineAxieModelState previousViewState;
 
     // Start is called before the first frame update
     void Start()
@@ -28,7 +28,7 @@ public class AxiesSpineView : MonoBehaviour
         if (model == null) return;
 
         // Detect changes in model.state
-        AxiesSpineModelState currentModelState = model.state;
+        SpineAxieModelState currentModelState = model.state;
 
         if (previousViewState != currentModelState)
         {
@@ -40,10 +40,10 @@ public class AxiesSpineView : MonoBehaviour
 
     void PlayNewStableAnimation()
     {
-        AxiesSpineModelState newModelState = model.state;
+        SpineAxieModelState newModelState = model.state;
         Spine.Animation nextAnimation;
 
-        if (newModelState == AxiesSpineModelState.Moving)
+        if (newModelState == SpineAxieModelState.Moving)
         {
             nextAnimation = move;
         }
@@ -95,7 +95,7 @@ public class AxiesSpineView : MonoBehaviour
             skeletonAnimation.skeleton.a = 0f;
         }
 
-        model.state = AxiesSpineModelState.Die;
+        model.state = SpineAxieModelState.Die;
 
         yield return new WaitForSeconds(0.1f);
         Debug.Log("Died!!!");

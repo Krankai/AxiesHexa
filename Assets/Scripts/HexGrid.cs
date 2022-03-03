@@ -8,7 +8,7 @@ public class HexGrid : MonoBehaviour
     Dictionary<Vector3Int, HexTile> hexTileDict = new Dictionary<Vector3Int, HexTile>();
     Dictionary<Vector3Int, List<Vector3Int>> hexTileNeightboursDict = new Dictionary<Vector3Int, List<Vector3Int>>();
     Dictionary<int, List<Vector3Int>> hexTileRingDict = new Dictionary<int, List<Vector3Int>>();
-    Dictionary<HexTile, AxiesSpineModel> axiesDict = new Dictionary<HexTile, AxiesSpineModel>();
+    Dictionary<HexTile, SpineAxieModel> axiesDict = new Dictionary<HexTile, SpineAxieModel>();
 
     public static Vector3Int center = new Vector3Int(0, 0, 0);
 
@@ -122,9 +122,9 @@ public class HexGrid : MonoBehaviour
     #endregion
 
     #region Axies
-    public AxiesSpineModel GetAxiesAt(HexTile tile)
+    public SpineAxieModel GetAxiesAt(HexTile tile)
     {
-        AxiesSpineModel axieModel = null;
+        SpineAxieModel axieModel = null;
         axiesDict.TryGetValue(tile, out axieModel);
         return axieModel;
     }
@@ -132,14 +132,14 @@ public class HexGrid : MonoBehaviour
     public GameObject GenerateAxieAt(HexTile tile, GameObject prefab)
     {
         // If the tile is already occuppied, return the corresponding axie
-        AxiesSpineModel axieModel = GetAxiesAt(tile);
+        SpineAxieModel axieModel = GetAxiesAt(tile);
         if (axieModel) return axieModel.gameObject;
 
         // Generate a new Axie at the specified tile
         if (prefab == null) return null;
 
         GameObject axieObject = Instantiate(prefab, tile.GetPositonForCharacter(), prefab.transform.rotation);
-        axieModel = axieObject.GetComponent<AxiesSpineModel>();
+        axieModel = axieObject.GetComponent<SpineAxieModel>();
         axiesDict[tile] = axieModel;
 
         // Turn to appropriate direction
@@ -169,7 +169,7 @@ public class HexGrid : MonoBehaviour
         return axieObject;
     }
 
-    public bool PutAxieAt(HexTile tile, AxiesSpineModel axieModel)
+    public bool PutAxieAt(HexTile tile, SpineAxieModel axieModel)
     {
         if (axiesDict.ContainsKey(tile)) return false;
 

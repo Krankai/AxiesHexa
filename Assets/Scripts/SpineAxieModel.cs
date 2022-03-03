@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [SelectionBase]
-public class AxiesSpineModel : MonoBehaviour
+public class SpineAxieModel : MonoBehaviour
 {
     [Header("Current State")]
-    public AxiesSpineModelState state;
+    public SpineAxieModelState state;
     public FacingDirection facingDirection;
 
     [Header("Attributes")]
@@ -36,7 +36,7 @@ public class AxiesSpineModel : MonoBehaviour
     public void TryAttack()
     {
         // Can only attack while in idle mode
-        if (state != AxiesSpineModelState.Idle) return;
+        if (state != SpineAxieModelState.Idle) return;
 
         // Prevent repeated attack attemps
         float currentTime = Time.time;
@@ -58,9 +58,9 @@ public class AxiesSpineModel : MonoBehaviour
     IEnumerator MoveRoutine(Vector3 destination)
     {
         if (immovable == true) yield break;
-        if (state == AxiesSpineModelState.Moving) yield break;
+        if (state == SpineAxieModelState.Moving) yield break;
 
-        state = AxiesSpineModelState.Moving;
+        state = SpineAxieModelState.Moving;
 
         // "Fake" moving to the specified destination
         {
@@ -73,7 +73,7 @@ public class AxiesSpineModel : MonoBehaviour
             transform.position = destination;
         }
 
-        state = AxiesSpineModelState.Idle;
+        state = SpineAxieModelState.Idle;
     }
 
     public void Turn(FacingDirection direction)
@@ -83,7 +83,7 @@ public class AxiesSpineModel : MonoBehaviour
     }
 }
 
-public enum AxiesSpineModelState
+public enum SpineAxieModelState
 {
     Idle,
     Moving,
