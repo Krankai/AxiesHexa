@@ -48,8 +48,8 @@ public class GameManager : MonoBehaviour
         //     Instantiate(tilePrefab, new Vector3Int(4, 0, 4), Quaternion.identity);
         // }
 
-        GenerateTiles();
-        GenerateAxies();
+        // GenerateTiles();
+        // GenerateAxies();
         //grid.CheckLog();
 
         // GameObject testObject = Instantiate(attackAxiePrefab, new Vector3(0, 1.05f, 0), attackAxiePrefab.transform.rotation);
