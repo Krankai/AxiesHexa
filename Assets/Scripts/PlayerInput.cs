@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerInput : MonoBehaviour
 {
     public SpineAxieModel testModel;
+    public SpineGauge testGaugeModel;
 
     void OnValidate()
     {
@@ -23,11 +24,13 @@ public class PlayerInput : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (testModel == null) return;
+        //if (testModel == null) return;
+        if (testGaugeModel == null) return;
 
         if (Input.GetButtonDown("Fire1"))
         {
-            testModel.TryMove(new Vector3(2.5f, 1.67f, -5.83f));
+            //testModel.TryMove(new Vector3(2.5f, 1.67f, -5.83f));
+            testGaugeModel.SetGaugePercent(0f);
         }
 
         if (Input.GetButtonDown("Fire2"))
