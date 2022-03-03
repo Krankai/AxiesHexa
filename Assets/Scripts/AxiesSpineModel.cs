@@ -7,6 +7,7 @@ public class AxiesSpineModel : MonoBehaviour
 {
     [Header("Current State")]
     public AxiesSpineModelState state;
+    public FacingDirection facingDirection;
 
     [Header("Attributes")]
     public int health;
@@ -74,6 +75,12 @@ public class AxiesSpineModel : MonoBehaviour
 
         state = AxiesSpineModelState.Idle;
     }
+
+    public void Turn(FacingDirection direction)
+    {
+        facingDirection = direction;
+        transform.localScale = new Vector3(transform.localScale.x * (int)facingDirection, transform.localScale.y, transform.localScale.z);
+    }
 }
 
 public enum AxiesSpineModelState
@@ -81,4 +88,10 @@ public enum AxiesSpineModelState
     Idle,
     Moving,
     Die
+}
+
+public enum FacingDirection
+{
+    Left = -1,
+    Right = 1,
 }

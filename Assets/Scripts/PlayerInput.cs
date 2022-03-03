@@ -6,6 +6,11 @@ public class PlayerInput : MonoBehaviour
 {
     public AxiesSpineModel testModel;
 
+    void OnValidate()
+    {
+        //Debug.Log(testModel);
+    }
+
     // Start is called before the first frame update
     void Start()
     {

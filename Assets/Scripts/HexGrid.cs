@@ -8,27 +8,11 @@ public class HexGrid : MonoBehaviour
     Dictionary<Vector3Int, HexTile> hexTileDict = new Dictionary<Vector3Int, HexTile>();
     Dictionary<Vector3Int, List<Vector3Int>> hexTileNeightboursDict = new Dictionary<Vector3Int, List<Vector3Int>>();
     Dictionary<int, List<Vector3Int>> hexTileRingDict = new Dictionary<int, List<Vector3Int>>();
+    Dictionary<HexTile, AxiesSpineModel> axiesDict = new Dictionary<HexTile, AxiesSpineModel>();
 
     public static Vector3Int center = new Vector3Int(0, 0, 0);
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        // foreach (HexTile hexTile in FindObjectsOfType<HexTile>())
-        // {
-        //     hexTileDict[hexTile.HexCoords] = hexTile;
-        // }
-
-        // =====
-        // TEST neighbours
-        // List<Vector3Int> neighbours = GetNeighbours(new Vector3Int(0, 0, 0));
-        // foreach (Vector3Int neighbour in neighbours)
-        // {
-        //     Debug.Log(neighbour);
-        // }
-        // =====
-    }
-
+    #region Grid
     public HexTile GetTileAt(Vector3Int hexCoordinates)
     {
         HexTile hex = null;
@@ -36,7 +20,35 @@ public class HexGrid : MonoBehaviour
         return hex;
     }
 
-    public List<Vector3Int> GetNeighbours(Vector3Int hexCoordinates)
+    public bool AddTile(HexTile tile)
+    {
+        if (hexTileDict.ContainsKey(tile.HexCoords)) return false;
+        if (tile == null) return false;
+
+        hexTileDict[tile.HexCoords] = tile;
+        return true;
+    }
+
+    public GameObject GenerateTileAt(Vector3Int hexCoordinates, GameObject prefab, float scaleFactor)
+    {
+        // Check for existing tile at the specified position
+        HexTile hexTile = GetTileAt(hexCoordinates);
+        if (hexTile) return hexTile.gameObject;
+
+        // Generate new tile at the specified position
+        if (prefab == null) return null;
+
+        GameObject newTileObject = Instantiate(prefab, /*hexCoordinates*/ center, Quaternion.identity);
+        newTileObject.transform.localScale *= scaleFactor;
+
+        hexTile = newTileObject.GetComponent<HexTile>();
+        hexTile.SnapToPosition(hexCoordinates);
+        hexTileDict[hexCoordinates] = hexTile;
+
+        return newTileObject;
+    }
+
+    public List<Vector3Int> GetNeighbourTiles(Vector3Int hexCoordinates)
     {
         // Invalid hex tile
         if (!hexTileDict.ContainsKey(hexCoordinates))
@@ -65,16 +77,7 @@ public class HexGrid : MonoBehaviour
         return hexTileNeightboursDict[hexCoordinates];
     }
 
-    public Vector3Int GetNeighbourInDirection(Vector3Int hexCoordinates, Vector3Int direction)
-    {
-        int validX = direction.x != 0 ? direction.x / Mathf.Abs(direction.x) : 0;
-        int validY = direction.y != 0 ? direction.y / Mathf.Abs(direction.y) : 0;
-        int validZ = direction.z != 0 ? direction.z / Mathf.Abs(direction.z) : 0;
-
-        return hexCoordinates + new Vector3Int(validX, validY, validZ);
-    }
-
-    public List<Vector3Int> GetHexesOnRing(int radius)
+    public List<Vector3Int> GetTilesOnRing(int radius)
     {
         // NOTE: assume center is at (0, 0, 0)
 
@@ -90,13 +93,13 @@ public class HexGrid : MonoBehaviour
         // Pick tile on the ring along Sounth-West direction as the first one
         Vector3Int tile = center + Direction.GetDirectionList()[4] /* (-1, 0, 1) */ * radius;
 
-        // Follow counter-clockwise direction to get all tiles on the ring
+        // Follow counter-clockwise direction to get all other tiles on the ring
         foreach (Vector3Int direction in Direction.GetDirectionList())
         {
             for (int i = 0; i < radius; ++i)
             {
                 tiles.Add(tile);
-                tile = GetNeighbourInDirection(tile, direction);
+                tile = tile + direction;
             }
         }
         hexTileRingDict.Add(radius, tiles);
@@ -104,14 +107,83 @@ public class HexGrid : MonoBehaviour
         return hexTileRingDict[radius];
     }
 
-    public void UpdateTiles()
+    public Dictionary<Vector3Int, HexTile>.ValueCollection GetAllTiles()
+    {
+        return hexTileDict.Values;
+    }
+
+    public void SyncTiles()
     {
         foreach (HexTile hexTile in FindObjectsOfType<HexTile>())
         {
             hexTileDict[hexTile.HexCoords] = hexTile;
+        }
+    }
+    #endregion
 
-            // TEST
-            //Debug.Log(hexTile.HexCoords);
+    #region Axies
+    public AxiesSpineModel GetAxiesAt(HexTile tile)
+    {
+        AxiesSpineModel axieModel = null;
+        axiesDict.TryGetValue(tile, out axieModel);
+        return axieModel;
+    }
+
+    public GameObject GenerateAxieAt(HexTile tile, GameObject prefab)
+    {
+        // If the tile is already occuppied, return the corresponding axie
+        AxiesSpineModel axieModel = GetAxiesAt(tile);
+        if (axieModel) return axieModel.gameObject;
+
+        // Generate a new Axie at the specified tile
+        if (prefab == null) return null;
+
+        GameObject axieObject = Instantiate(prefab, tile.GetPositonForCharacter(), prefab.transform.rotation);
+        axieModel = axieObject.GetComponent<AxiesSpineModel>();
+        axiesDict[tile] = axieModel;
+
+        // Turn to appropriate direction
+        if (tile.TilePosition.x < 0)
+        {
+            if (tile.type == TileType.Defense)
+            {
+                axieModel.Turn(FacingDirection.Left);
+            }
+            else if (tile.type == TileType.Attack)
+            {
+                axieModel.Turn(FacingDirection.Right);
+            }
+        }
+        else
+        {
+            if (tile.type == TileType.Defense)
+            {
+                axieModel.Turn(FacingDirection.Right);
+            }
+            else if (tile.type == TileType.Attack)
+            {
+                axieModel.Turn(FacingDirection.Left);
+            }
+        }
+
+        return axieObject;
+    }
+
+    public bool PutAxieAt(HexTile tile, AxiesSpineModel axieModel)
+    {
+        if (axiesDict.ContainsKey(tile)) return false;
+
+        axiesDict[tile] = axieModel;
+        return true;
+    }
+    #endregion
+
+    public void CheckLog()
+    {
+        // TEST
+        foreach (KeyValuePair<Vector3Int, HexTile> tile in hexTileDict)
+        {
+            Debug.Log("{ Key: " + tile.Key + ", Value: " + tile.Value);
         }
     }
 }
