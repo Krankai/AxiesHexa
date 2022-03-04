@@ -21,6 +21,8 @@ public class SpineAxieModel : MonoBehaviour
     public int rollNumber;
     public int damage;
 
+    [Header("Technical Details")]
+    public int flag = 0;
 
     float moveSpeed = 10f;
     float attackInterval = 1f;      // default: 0.12f???

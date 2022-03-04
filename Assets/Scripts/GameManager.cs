@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviour
     public SpineAxieModel attacker;
     public SpineAxieModel defender;
 
+    int currentFlag = 1;
+
     Dictionary<TeamSet, TeamSet> battlePairs = new Dictionary<TeamSet, TeamSet>();
     Dictionary<TeamSet, HexTile> moveList = new Dictionary<TeamSet, HexTile>();
 
@@ -64,10 +66,10 @@ public class GameManager : MonoBehaviour
         //     testObject.transform.parent = charactersGroup.transform;
         // }
         
-        TeamSet attackTeam = new TeamSet(attacker, null);
-        TeamSet defendTeam = new TeamSet(defender, null);
+        // TeamSet attackTeam = new TeamSet(attacker, null);
+        // TeamSet defendTeam = new TeamSet(defender, null);
 
-        battlePairs[attackTeam] = defendTeam;
+        // battlePairs[attackTeam] = defendTeam;
     }
 
     // Update is called once per frame
@@ -161,7 +163,107 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
-    public void SimulateAttack()
+    public void SimulateStep()
+    {
+        // Traverse through all axies on the field
+        foreach (var pair in hexGrid.axiesDict)
+        {
+            HexTile currentTile = pair.Key;
+            SpineAxieModel currentAxie = pair.Value;
+
+            // If the current axie has already been handle, skip
+            if (currentAxie.flag == currentFlag) continue;
+
+            var neighbourHexCoordinates = hexGrid.GetNeighbourTiles(pair.Key.HexCoords);
+
+            bool success = false;
+
+            // 1. Check for possible attack
+            foreach (var coordinate in neighbourHexCoordinates)
+            {
+                HexTile examineTile = hexGrid.GetTileAt(coordinate);
+                if (examineTile == null) continue;                              // invalid tile
+                Debug.Log("Invalid tile: " + examineTile.HexCoords);
+
+                SpineAxieModel examineAxie = hexGrid.GetAxieAt(examineTile);
+                if (examineAxie == null) continue;                              // no axie
+                Debug.Log("Axie: " + examineAxie.axieType);
+
+                Debug.Log("Axie flag: " + examineAxie.flag + ", current flag: " + currentFlag);
+                if (examineAxie.flag == currentFlag) continue;                  // same flag means this axie has already been handled
+
+                Debug.Log(currentTile.HexCoords);
+                Debug.Log(currentAxie.axieType);
+                Debug.Log(examineTile.HexCoords);
+                Debug.Log(examineAxie.axieType);
+                if (examineAxie.axieType == currentAxie.axieType) continue;     // cannot attack Axie with same type (defense / attack)
+
+                // Can attack -> register both axies to handle battle later
+                TeamSet attackerSet = new TeamSet(currentAxie, currentTile);
+                TeamSet defenderSet = new TeamSet(examineAxie, examineTile);
+
+                battlePairs.Add(attackerSet, defenderSet);
+
+                // Set flag for both axies
+                currentAxie.flag = currentFlag;
+                examineAxie.flag = currentFlag;
+
+                success = true;
+                break;
+            }
+
+            if (success) continue;
+
+            // 2. Check for possible moving
+            float currentDistanceToCenter = Mathf.Abs(currentTile.HexCoords.x) + Mathf.Abs(currentTile.HexCoords.y) + Mathf.Abs(currentTile.HexCoords.z);
+            foreach (var coordinate in neighbourHexCoordinates)
+            {
+                // Compromise #1: move towards the center instead of the closest enemy
+
+                HexTile examineTile = hexGrid.GetTileAt(coordinate);
+                if (examineTile == null) continue;                              // invalid tile
+
+                SpineAxieModel possibleAxie = hexGrid.GetAxieAt(examineTile);
+                if (possibleAxie != null) continue;                             // occupied hence cannot move into
+
+                float examineDistanceToCenter = Mathf.Abs(examineTile.HexCoords.x) + Mathf.Abs(examineTile.HexCoords.y) + Mathf.Abs(examineTile.HexCoords.z);                
+                if (examineDistanceToCenter >= currentDistanceToCenter)         // if not closer to center, don't move
+                {
+                    continue;
+                }
+
+                if (moveList.ContainsValue(examineTile)) continue;              // if the tile is already set as destination for another axie, skip
+
+                // Can move into -> register to handle moving later
+                TeamSet axieSet = new TeamSet(currentAxie, currentTile);
+                moveList.Add(axieSet, examineTile);
+
+                // Set flag for axie
+                currentAxie.flag = currentFlag;
+
+                success = true;
+                break;
+            }
+
+            if (success) continue;
+
+            // 3. Else, stay idling
+            currentAxie.flag = currentFlag;
+        }
+
+        // Simulate battle
+        Debug.Log(battlePairs.Count);
+        SimulateAttack();
+
+        // Simulate moving
+        Debug.Log(moveList.Count);
+        SimulateMove();
+
+        // Change current flag (basically, set all axies into not-handle state)
+        currentFlag = (currentFlag == 1) ? 0 : 1;
+    }
+
+    private void SimulateAttack()
     {
         foreach (KeyValuePair<TeamSet, TeamSet> pair in battlePairs)
         {
@@ -183,15 +285,22 @@ public class GameManager : MonoBehaviour
             if (attackerSet.model.IsDeath && attackerSet.tile != null)
             {
                 hexGrid.RemoveAxieAt(attackerSet.tile, attackerSet.model);
-                Destroy(attackerSet.model.gameObject);
+
+                // NOTE: only Destroy gameobject after finish "dying" animation
+                //Destroy(attackerSet.model.gameObject);
             }
 
             if (defenderSet.model.IsDeath && defenderSet.tile != null)
             {
                 hexGrid.RemoveAxieAt(defenderSet.tile, defenderSet.model);
-                Destroy(defenderSet.model.gameObject);
+
+                // NOTE: only Destroy gameobject after finish "dying" animation
+                //Destroy(defenderSet.model.gameObject);
             }
         }
+
+        // Reset
+        battlePairs.Clear();
     }
 
     private void SimulateMove()
@@ -204,7 +313,7 @@ public class GameManager : MonoBehaviour
             if (axieSet.model == null) continue;
 
             // Move to tile
-            axieSet.model.TryMove(destinationTile.TilePosition);
+            axieSet.model.TryMove(destinationTile.GetPositonForCharacter());
 
             // Update corresponding data structures
             hexGrid.PutAxieAt(destinationTile, axieSet.model);
@@ -213,6 +322,9 @@ public class GameManager : MonoBehaviour
                 hexGrid.RemoveAxieAt(axieSet.tile, axieSet.model);
             }
         }
+
+        // Reset
+        moveList.Clear();
     }
 }
 

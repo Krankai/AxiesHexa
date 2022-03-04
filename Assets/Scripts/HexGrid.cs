@@ -8,7 +8,9 @@ public class HexGrid : MonoBehaviour
     Dictionary<Vector3Int, HexTile> hexTileDict = new Dictionary<Vector3Int, HexTile>();
     Dictionary<Vector3Int, List<Vector3Int>> hexTileNeightboursDict = new Dictionary<Vector3Int, List<Vector3Int>>();
     Dictionary<int, List<Vector3Int>> hexTileRingDict = new Dictionary<int, List<Vector3Int>>();
-    Dictionary<HexTile, SpineAxieModel> axiesDict = new Dictionary<HexTile, SpineAxieModel>();
+    
+    [HideInInspector]
+    public Dictionary<HexTile, SpineAxieModel> axiesDict = new Dictionary<HexTile, SpineAxieModel>();
 
     public static Vector3Int center = new Vector3Int(0, 0, 0);
 

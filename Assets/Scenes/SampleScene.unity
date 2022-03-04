@@ -526,7 +526,7 @@ MonoBehaviour:
   attackTilePrefab: {fileID: 1943117728638778, guid: 83ec1435dfe1a7640b51045f00a97eba, type: 3}
   barrierTilePrefab: {fileID: 1343071931556646, guid: 1ea65ce7fef5dbd4b9ff7d688ea90cd8, type: 3}
   scaleFactor: 5
-  numberOfRings: 5
+  numberOfRings: 3
   charactersGroup: {fileID: 57578712}
   defenseAxiePrefab: {fileID: 3027668343627078599, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
   attackAxiePrefab: {fileID: 5512659817032145198, guid: 5a730669731946a4fa3a9adaddafd8c1, type: 3}
@@ -2595,6 +2595,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   testModel: {fileID: 50949800}
   testGaugeModel: {fileID: 800445581}
+  gameManager: {fileID: 478396274}
 --- !u!4 &1980016134
 Transform:
   m_ObjectHideFlags: 0
