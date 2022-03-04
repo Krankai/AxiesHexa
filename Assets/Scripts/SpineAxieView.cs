@@ -27,6 +27,12 @@ public class SpineAxieView : MonoBehaviour
         if (skeletonAnimation == null) return;
         if (model == null) return;
 
+        // Update facing direction
+        if (IsUnmatchDirection())
+        {
+            Turn(model.facingLeft);
+        }
+
         // Detect changes in model.state
         SpineAxieModelState currentModelState = model.state;
 
@@ -99,5 +105,20 @@ public class SpineAxieView : MonoBehaviour
 
         yield return new WaitForSeconds(0.1f);
         Debug.Log("Died!!!");
+    }
+
+    public void Turn(bool facingLeft)
+    {
+        if (skeletonAnimation == null) return;
+        
+        var scaleVector = skeletonAnimation.transform.localScale;
+        skeletonAnimation.transform.localScale = new Vector3(Mathf.Abs(scaleVector.x) * (facingLeft ? 1f : -1f), scaleVector.y, scaleVector.z);
+    }
+
+    private bool IsUnmatchDirection()
+    {
+        if (skeletonAnimation == null) return false;
+
+        return (model.facingLeft != skeletonAnimation.transform.localScale.x > 0);
     }
 }

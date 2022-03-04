@@ -30,17 +30,24 @@ public class PlayerInput : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             //testModel.TryMove(new Vector3(2.5f, 1.67f, -5.83f));
-            testGaugeModel.SetGaugePercent(0f);
+            testGaugeModel.SetGaugePercent(0.6f);
         }
 
         if (Input.GetButtonDown("Fire2"))
         {
-            testModel.TryAttack();
+            //testModel.TryAttack();
+
+            var manager = FindObjectOfType<GameManager>();
+            if (manager)
+            {
+                manager.SimulateAttack();
+            }
         }
 
         if (Input.GetButtonDown("Fire3"))
         {
-            testModel.TryDie();
+            //testModel.TryDie();
+            testGaugeModel.SetGaugePercent(0.4f);
         }
     }
 }

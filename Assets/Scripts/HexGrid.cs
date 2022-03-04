@@ -147,22 +147,26 @@ public class HexGrid : MonoBehaviour
         {
             if (tile.type == TileType.Defense)
             {
-                axieModel.Turn(FacingDirection.Left);
+                //axieModel.Turn(FacingDirection.Left);
+                axieModel.facingLeft = true;
             }
             else if (tile.type == TileType.Attack)
             {
-                axieModel.Turn(FacingDirection.Right);
+                //axieModel.Turn(FacingDirection.Right);
+                axieModel.facingLeft = false;
             }
         }
         else
         {
             if (tile.type == TileType.Defense)
             {
-                axieModel.Turn(FacingDirection.Right);
+                //axieModel.Turn(FacingDirection.Right);
+                axieModel.facingLeft = false;
             }
             else if (tile.type == TileType.Attack)
             {
-                axieModel.Turn(FacingDirection.Left);
+                //axieModel.Turn(FacingDirection.Left);
+                axieModel.facingLeft = true;
             }
         }
 

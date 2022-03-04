@@ -31,6 +31,12 @@ public class GameManager : MonoBehaviour
     private GameObject attackAxiePrefab;
     #endregion
 
+    [Header("Test")]
+    public SpineAxieModel attacker;
+    public SpineAxieModel defender;
+
+    Dictionary<SpineAxieModel, SpineAxieModel> battlePairs = new Dictionary<SpineAxieModel, SpineAxieModel>();
+    Dictionary<SpineAxieModel, HexTile> moveList = new Dictionary<SpineAxieModel, HexTile>();
 
     void Awake()
     {
@@ -58,6 +64,8 @@ public class GameManager : MonoBehaviour
         //     testObject.transform.parent = charactersGroup.transform;
         // }
         
+
+        battlePairs[attacker] = defender;
     }
 
     // Update is called once per frame
@@ -149,5 +157,37 @@ public class GameManager : MonoBehaviour
         }
 
         return true;
+    }
+
+    public void SimulateAttack()
+    {
+        foreach (KeyValuePair<SpineAxieModel, SpineAxieModel> pair in battlePairs)
+        {
+            var attacker = pair.Key;
+            var defender = pair.Value;
+
+            // Prepare
+            attacker.Prepare();
+            defender.Prepare();
+
+            // Battle;
+            attacker.TryAttack(defender);
+            defender.TryAttack(attacker);
+
+            // Aftermath
+            // todo: die / disappear ?
+        }
+    }
+
+    private void SimulateMove()
+    {
+        foreach(KeyValuePair<SpineAxieModel, HexTile> pair in moveList)
+        {
+            var character = pair.Key;
+            var destinationTile = pair.Value;
+
+            // Move
+            character.TryMove(destinationTile.TilePosition);
+        }
     }
 }

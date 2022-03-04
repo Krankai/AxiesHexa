@@ -6,63 +6,55 @@ using UnityEngine;
 public class SpineGauge : MonoBehaviour
 {
     [Range(0, 1)]
-    public float fillPercent = 0f;
+    public float fillPercent;
     public AnimationReferenceAsset fillAnimation;
+    public bool visible = true;
 
     SkeletonRenderer skeletonRenderer;
-
+    float fillSpeed = 1f;
+    float currentPercent;
 
     void Awake()
     {
         skeletonRenderer = GetComponent<SkeletonRenderer>();
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        currentPercent = 1f;
     }
 
     public void SetGaugePercent(float percent)
     {
-        // if (fillAnimation == null) return;
-        // if (skeletonRenderer == null) return;
-
-        // var skeleton = skeletonRenderer.skeleton;
-        // if (skeleton == null) return;
-
-        // fillAnimation.Animation.Apply(skeleton, 0, percent, false, null, 1f, Spine.MixPose.Setup, Spine.MixDirection.In);
-        // skeleton.Update(Time.deltaTime);
-        // skeleton.UpdateWorldTransform();
+        if (visible == false) return;
 
         StartCoroutine(GaugeRountine(percent));
+        currentPercent = percent;
     }
 
     IEnumerator GaugeRountine(float percent)
     {
-        if (fillAnimation == null) yield break;
         if (skeletonRenderer == null) yield break;
 
         var skeleton = skeletonRenderer.skeleton;
         if (skeleton == null) yield break;
 
-        for (float t = 1f; t > percent; t -= Time.deltaTime)
+        if (fillAnimation == null) yield break;
+        float start = currentPercent * fillAnimation.Animation.duration;
+        float target = percent * fillAnimation.Animation.duration;
+
+        float step = fillSpeed * Time.deltaTime;
+        for (float t = start; t > target; t -= step)
         {
             fillAnimation.Animation.Apply(skeleton, 0, t, false, null, 1f, Spine.MixPose.Setup, Spine.MixDirection.In);
-            skeleton.Update(Time.deltaTime);
+            fillPercent = t / fillAnimation.Animation.duration;
+
+            skeleton.Update(step);
             skeleton.UpdateWorldTransform();
 
             yield return null;
         }
 
-        fillAnimation.Animation.Apply(skeleton, 0, percent, false, null, 1f, Spine.MixPose.Setup, Spine.MixDirection.In);
-        skeleton.Update(Time.deltaTime);
+        fillAnimation.Animation.Apply(skeleton, 0, target, false, null, 1f, Spine.MixPose.Setup, Spine.MixDirection.In);
+        fillPercent = percent;
+
+        skeleton.Update(step);
         skeleton.UpdateWorldTransform();
     }
 }

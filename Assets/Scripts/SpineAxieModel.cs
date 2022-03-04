@@ -5,13 +5,22 @@ using UnityEngine;
 [SelectionBase]
 public class SpineAxieModel : MonoBehaviour
 {
+    public SpineGauge healthGauge;
+
     [Header("Current State")]
     public SpineAxieModelState state;
-    public FacingDirection facingDirection;
+    public bool facingLeft;
 
     [Header("Attributes")]
-    public int health;
+    public int currentHealth;
+    public int maximumHealth;
+    public AxieType axieType;
     public bool immovable;
+
+    [Header("Battle")]
+    public int rollNumber;
+    public int damage;
+
 
     float moveSpeed = 10f;
     float attackInterval = 0.12f;
@@ -22,9 +31,15 @@ public class SpineAxieModel : MonoBehaviour
     public event System.Action AttackEvent;
     public event System.Action DieEvent;
 
-    void Awake()
+    void Start()
     {
         fadeOutDuration = 0.8f;
+        currentHealth = maximumHealth;
+    }
+
+    public void Prepare()
+    {
+        rollNumber = Random.Range(0, 3);
     }
 
     public void TryMove(Vector3 destination)
@@ -33,7 +48,7 @@ public class SpineAxieModel : MonoBehaviour
         StartCoroutine(MoveRoutine(destination));
     }
 
-    public void TryAttack()
+    public void TryAttack(SpineAxieModel target)
     {
         // Can only attack while in idle mode
         if (state != SpineAxieModelState.Idle) return;
@@ -47,6 +62,9 @@ public class SpineAxieModel : MonoBehaviour
             {
                 AttackEvent();         // Fire the "AttackEvent" event
             }
+
+            damage = CalculateDamage(rollNumber, target.rollNumber);
+            target.OnReceiveDamage(damage);
         }
     }
 
@@ -76,10 +94,34 @@ public class SpineAxieModel : MonoBehaviour
         state = SpineAxieModelState.Idle;
     }
 
-    public void Turn(FacingDirection direction)
+    private int CalculateDamage(int attackerRoll, int defenderRoll)
     {
-        facingDirection = direction;
-        transform.localScale = new Vector3(transform.localScale.x * (int)facingDirection, transform.localScale.y, transform.localScale.z);
+        if ((3 + attackerRoll - defenderRoll) % 3 == 0)
+        {
+            return 4;
+        }
+        else if ((3 + attackerRoll - defenderRoll) % 3 == 1)
+        {
+            return 5;
+        }
+        else if ((3 + attackerRoll - defenderRoll) % 3 == 2)
+        {
+            return 3;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    private void OnReceiveDamage(int damage)
+    {
+        currentHealth -= damage;
+        if (healthGauge)
+        {
+            float percent = currentHealth < 0 ? 0 : 1f * currentHealth / maximumHealth;
+            healthGauge.SetGaugePercent(percent);
+        }
     }
 }
 
@@ -90,8 +132,8 @@ public enum SpineAxieModelState
     Die
 }
 
-public enum FacingDirection
+public enum AxieType
 {
-    Left = -1,
-    Right = 1,
+    Attack,
+    Defense
 }

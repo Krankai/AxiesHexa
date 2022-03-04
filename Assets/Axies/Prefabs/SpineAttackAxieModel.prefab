@@ -7,6 +7,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1905829211760133903, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3027668343627078598, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -65,19 +69,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3027668343627078599, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: m_Name
-      value: AttackAxiesSpineModel
+      value: SpineAttackAxieModel
       objectReference: {fileID: 0}
     - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: health
       value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+      propertyPath: axieType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: immovable
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+      propertyPath: healthGauge
+      value: 
+      objectReference: {fileID: 7193829455799320194}
+    - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+      propertyPath: currentHealth
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+      propertyPath: maximumHealth
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 3027668344341008546, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: m_Name
-      value: AttackAxiesSpineView
+      value: SpineAttackAxieView
       objectReference: {fileID: 0}
     - target: {fileID: 3027668344341008548, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: skeletonDataAsset
@@ -121,3 +141,14 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: 0115be76aa0fcc44b867c79e590280c1, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+--- !u!114 &7193829455799320194 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 383100030811896939, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
+  m_PrefabInstance: {fileID: 7387194989812581097}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e59fb3479c65c34439c9275a08bec2ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
