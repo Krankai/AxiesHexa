@@ -23,13 +23,15 @@ public class SpineAxieModel : MonoBehaviour
 
 
     float moveSpeed = 10f;
-    float attackInterval = 0.12f;
+    float attackInterval = 1f;      // default: 0.12f???
     float lastAttackTime;
     [HideInInspector]
     public float fadeOutDuration;       // for dying animation
 
     public event System.Action AttackEvent;
     public event System.Action DieEvent;
+
+    public bool IsDeath => currentHealth <= 0;
 
     void Start()
     {
@@ -63,8 +65,11 @@ public class SpineAxieModel : MonoBehaviour
                 AttackEvent();         // Fire the "AttackEvent" event
             }
 
-            damage = CalculateDamage(rollNumber, target.rollNumber);
-            target.OnReceiveDamage(damage);
+            if (target)
+            {
+                damage = CalculateDamage(rollNumber, target.rollNumber);
+                target.OnReceiveDamage(damage);
+            }
         }
     }
 
@@ -117,9 +122,11 @@ public class SpineAxieModel : MonoBehaviour
     private void OnReceiveDamage(int damage)
     {
         currentHealth -= damage;
+        if (currentHealth < 0) currentHealth = 0;
+
         if (healthGauge)
         {
-            float percent = currentHealth < 0 ? 0 : 1f * currentHealth / maximumHealth;
+            float percent = 1f * currentHealth / maximumHealth;
             healthGauge.SetGaugePercent(percent);
         }
     }

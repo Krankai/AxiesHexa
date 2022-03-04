@@ -122,17 +122,29 @@ public class HexGrid : MonoBehaviour
     #endregion
 
     #region Axies
-    public SpineAxieModel GetAxiesAt(HexTile tile)
+    public SpineAxieModel GetAxieAt(HexTile tile)
     {
         SpineAxieModel axieModel = null;
         axiesDict.TryGetValue(tile, out axieModel);
         return axieModel;
     }
 
+    public void RemoveAxieAt(HexTile tile, SpineAxieModel confirmModel = null)
+    {
+        if (confirmModel != null)
+        {
+            SpineAxieModel saveModel = GetAxieAt(tile);
+            if (saveModel == null) return;
+            if (saveModel != confirmModel) return;      // not match axie model (?)
+        }
+
+        axiesDict.Remove(tile);
+    }
+
     public GameObject GenerateAxieAt(HexTile tile, GameObject prefab)
     {
         // If the tile is already occuppied, return the corresponding axie
-        SpineAxieModel axieModel = GetAxiesAt(tile);
+        SpineAxieModel axieModel = GetAxieAt(tile);
         if (axieModel) return axieModel.gameObject;
 
         // Generate a new Axie at the specified tile

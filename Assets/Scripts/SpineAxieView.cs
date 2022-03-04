@@ -69,6 +69,13 @@ public class SpineAxieView : MonoBehaviour
 
         var empty = skeletonAnimation.state.AddEmptyAnimation(1, 0.5f, 0f);
         empty.AttachmentThreshold = 1f;
+        empty.End += delegate
+        {
+            if (model.currentHealth <= 0)
+            {
+                model.TryDie();
+            }
+        };
     }
 
     public void PlayDie()
@@ -76,9 +83,10 @@ public class SpineAxieView : MonoBehaviour
         var dieTrack = skeletonAnimation.AnimationState.SetAnimation(2, die, false);
         dieTrack.AttachmentThreshold = 1f;
         dieTrack.MixDuration = 0f;
+        dieTrack.TrackEnd = float.PositiveInfinity;
 
-        var empty = skeletonAnimation.state.AddEmptyAnimation(2, 0.5f, 0f);
-        empty.AttachmentThreshold = 1f;
+        // var empty = skeletonAnimation.state.AddEmptyAnimation(2, 0.5f, 0f);
+        // empty.AttachmentThreshold = 1f;
 
         StartCoroutine(DieRoutine());
     }
@@ -86,6 +94,8 @@ public class SpineAxieView : MonoBehaviour
     IEnumerator DieRoutine()
     {
         if (model.fadeOutDuration <= 0) yield break;
+
+        yield return new WaitForSeconds(0.5f);
 
         // Fade out "skeleton" to simulate dying animation
         {
@@ -102,9 +112,8 @@ public class SpineAxieView : MonoBehaviour
         }
 
         model.state = SpineAxieModelState.Die;
-
-        yield return new WaitForSeconds(0.1f);
-        Debug.Log("Died!!!");
+        
+        Destroy(model.gameObject, 0.5f);
     }
 
     public void Turn(bool facingLeft)
@@ -115,7 +124,7 @@ public class SpineAxieView : MonoBehaviour
         skeletonAnimation.transform.localScale = new Vector3(Mathf.Abs(scaleVector.x) * (facingLeft ? 1f : -1f), scaleVector.y, scaleVector.z);
     }
 
-    private bool IsUnmatchDirection()
+    bool IsUnmatchDirection()
     {
         if (skeletonAnimation == null) return false;
 

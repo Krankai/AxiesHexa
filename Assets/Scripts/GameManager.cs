@@ -35,8 +35,8 @@ public class GameManager : MonoBehaviour
     public SpineAxieModel attacker;
     public SpineAxieModel defender;
 
-    Dictionary<SpineAxieModel, SpineAxieModel> battlePairs = new Dictionary<SpineAxieModel, SpineAxieModel>();
-    Dictionary<SpineAxieModel, HexTile> moveList = new Dictionary<SpineAxieModel, HexTile>();
+    Dictionary<TeamSet, TeamSet> battlePairs = new Dictionary<TeamSet, TeamSet>();
+    Dictionary<TeamSet, HexTile> moveList = new Dictionary<TeamSet, HexTile>();
 
     void Awake()
     {
@@ -54,8 +54,8 @@ public class GameManager : MonoBehaviour
         //     Instantiate(tilePrefab, new Vector3Int(4, 0, 4), Quaternion.identity);
         // }
 
-        // GenerateTiles();
-        // GenerateAxies();
+        GenerateTiles();
+        GenerateAxies();
         //grid.CheckLog();
 
         // GameObject testObject = Instantiate(attackAxiePrefab, new Vector3(0, 1.05f, 0), attackAxiePrefab.transform.rotation);
@@ -64,8 +64,10 @@ public class GameManager : MonoBehaviour
         //     testObject.transform.parent = charactersGroup.transform;
         // }
         
+        TeamSet attackTeam = new TeamSet(attacker, null);
+        TeamSet defendTeam = new TeamSet(defender, null);
 
-        battlePairs[attacker] = defender;
+        battlePairs[attackTeam] = defendTeam;
     }
 
     // Update is called once per frame
@@ -161,33 +163,67 @@ public class GameManager : MonoBehaviour
 
     public void SimulateAttack()
     {
-        foreach (KeyValuePair<SpineAxieModel, SpineAxieModel> pair in battlePairs)
+        foreach (KeyValuePair<TeamSet, TeamSet> pair in battlePairs)
         {
-            var attacker = pair.Key;
-            var defender = pair.Value;
+            var attackerSet = pair.Key;
+            var defenderSet = pair.Value;
 
-            // Prepare
-            attacker.Prepare();
-            defender.Prepare();
+            if (attackerSet.model == null) continue;
+            if (defenderSet.model == null) continue;
 
-            // Battle;
-            attacker.TryAttack(defender);
-            defender.TryAttack(attacker);
+            // Prepare for battle
+            attackerSet.model.Prepare();
+            defenderSet.model.Prepare();
 
-            // Aftermath
-            // todo: die / disappear ?
+            // Batte
+            attackerSet.model.TryAttack(defenderSet.model);
+            defenderSet.model.TryAttack(attackerSet.model);
+
+            // Aftermath: update corresponding data structures and cleanup death axies
+            if (attackerSet.model.IsDeath && attackerSet.tile != null)
+            {
+                hexGrid.RemoveAxieAt(attackerSet.tile, attackerSet.model);
+                Destroy(attackerSet.model.gameObject);
+            }
+
+            if (defenderSet.model.IsDeath && defenderSet.tile != null)
+            {
+                hexGrid.RemoveAxieAt(defenderSet.tile, defenderSet.model);
+                Destroy(defenderSet.model.gameObject);
+            }
         }
     }
 
     private void SimulateMove()
     {
-        foreach(KeyValuePair<SpineAxieModel, HexTile> pair in moveList)
+        foreach (KeyValuePair<TeamSet, HexTile> pair in moveList)
         {
-            var character = pair.Key;
+            var axieSet = pair.Key;
             var destinationTile = pair.Value;
 
-            // Move
-            character.TryMove(destinationTile.TilePosition);
+            if (axieSet.model == null) continue;
+
+            // Move to tile
+            axieSet.model.TryMove(destinationTile.TilePosition);
+
+            // Update corresponding data structures
+            hexGrid.PutAxieAt(destinationTile, axieSet.model);
+            if (axieSet.tile != null)
+            {
+                hexGrid.RemoveAxieAt(axieSet.tile, axieSet.model);
+            }
         }
+    }
+}
+
+public class TeamSet
+{
+    public SpineAxieModel model;
+    public HexTile tile;
+
+    public TeamSet(SpineAxieModel model, HexTile tile)
+    {
+        this.model = model;
+        this.tile = tile;
     }
 }
