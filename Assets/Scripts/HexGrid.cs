@@ -12,9 +12,19 @@ public class HexGrid : MonoBehaviour
     [HideInInspector]
     public Dictionary<HexTile, SpineAxieModel> axiesDict = new Dictionary<HexTile, SpineAxieModel>();
 
-    public static Vector3Int center = new Vector3Int(0, 0, 0);
+    public static Vector3Int center = Vector3Int.zero;
+
+
+    public void ClearGrid()
+    {
+        hexTileDict.Clear();
+        hexTileNeightboursDict.Clear();
+        hexTileRingDict.Clear();
+        axiesDict.Clear();
+    }
 
     #region Grid
+    public int GetCountTiles() => hexTileDict.Count;
     public HexTile GetTileAt(Vector3Int hexCoordinates)
     {
         HexTile hex = null;
@@ -124,6 +134,8 @@ public class HexGrid : MonoBehaviour
     #endregion
 
     #region Axies
+    public int GetCountAxies() => axiesDict.Count;
+
     public SpineAxieModel GetAxieAt(HexTile tile)
     {
         SpineAxieModel axieModel = null;

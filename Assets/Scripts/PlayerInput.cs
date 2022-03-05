@@ -34,15 +34,15 @@ public class PlayerInput : MonoBehaviour
             //testGaugeModel.SetGaugePercent(0.6f);
             //testModel.TryDie();
 
-            if (gameManager != null)
-            {
-                if (gameManager.isWaitingAxieAnimations)
-                {
-                    Debug.Log("Cannot. Still waiting!!!");
-                    return;
-                }
-                gameManager.SimulateStep();
-            }
+            // if (gameManager != null)
+            // {
+            //     if (gameManager.isWaitingAxieAnimations)
+            //     {
+            //         Debug.Log("Cannot. Still waiting!!!");
+            //         return;
+            //     }
+            //     gameManager.SimulateStep();
+            // }
         }
 
         if (Input.GetButtonDown("Fire2"))

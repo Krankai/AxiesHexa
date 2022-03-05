@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public GameObject container;
-
     #region Zooming
     [Header("Zooming")]
     public float maxZoom = 5;

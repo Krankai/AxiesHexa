@@ -2,6 +2,7 @@ using Spine.Unity;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,8 +19,8 @@ public class GameManager : MonoBehaviour
     private GameObject barrierTilePrefab;
     public float scaleFactor = 1f;
     public int numberOfRings = 1;
-
-    private int minRings = 1;
+    const int minRings = 3;
+    const int maxRings = 10;
     #endregion
 
     #region Characters
@@ -29,6 +30,15 @@ public class GameManager : MonoBehaviour
     private GameObject defenseAxiePrefab;
     [SerializeField]
     private GameObject attackAxiePrefab;
+    #endregion
+
+    #region Input Control
+    [Header("Input Control")]
+    public InputField ringInputField;
+    public Slider ringSlider;
+    public Button generateButton;
+    public Button clearButton;
+    public Button simulateButton;
     #endregion
 
     [Header("Test")]
@@ -50,13 +60,15 @@ public class GameManager : MonoBehaviour
         {
             hexGrid = GetComponentInChildren<HexGrid>();
         }
+
+        // Set min/max for slider
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        GenerateTiles();
-        GenerateAxies();
+        // GenerateTiles();
+        // GenerateAxies();
         //grid.CheckLog();
 
         // GameObject testObject = Instantiate(attackAxiePrefab, new Vector3(0, 1.05f, 0), attackAxiePrefab.transform.rotation);
@@ -76,17 +88,18 @@ public class GameManager : MonoBehaviour
     {
         if (isWaitingAxieAnimations)
         {
-            Debug.Log("Current count: " + countWaitingAxieAnimations);
+            //Debug.Log("Current count: " + countWaitingAxieAnimations);
             if (countWaitingAxieAnimations <= 0)
             {
                 isWaitingAxieAnimations = false;
-                Debug.Log("Can simulate next step...");
+                //Debug.Log("Can simulate next step...");
             }
         }
     }
 
     private bool GenerateTiles()
     {
+        if (numberOfRings <= 0 || scaleFactor <= 0) return false;
         if (hexGrid == null) return false;
 
         // Generate and add center tile (= defense tile)
@@ -146,6 +159,7 @@ public class GameManager : MonoBehaviour
     private bool GenerateAxies()
     {
         if (hexGrid == null) return false;
+        if (hexGrid.GetCountTiles() <= 0) return false;
 
         Dictionary<Vector3Int, HexTile>.ValueCollection values = hexGrid.GetAllTiles();
         foreach (HexTile tile in values)
@@ -177,6 +191,9 @@ public class GameManager : MonoBehaviour
 
     public void SimulateStep()
     {
+        if (hexGrid == null) return;
+        if (hexGrid.GetCountTiles() <= 0 || hexGrid.GetCountAxies() <= 0) return;
+
         // Traverse through all axies on the field
         foreach (var pair in hexGrid.axiesDict)
         {
@@ -260,7 +277,7 @@ public class GameManager : MonoBehaviour
 
         // Update counter: number of axies to wait (for them to finish animation)
         countWaitingAxieAnimations = battlePairs.Count * 2 + moveList.Count;
-        Debug.Log("Total: " + countWaitingAxieAnimations);
+        //Debug.Log("Total: " + countWaitingAxieAnimations);
 
         // Simulate battle
         SimulateAttack();
@@ -376,6 +393,83 @@ public class GameManager : MonoBehaviour
 
         // Reset
         moveList.Clear();
+    }
+
+    public void OnValueChangedRingSlider(float value)
+    {
+        numberOfRings = (int)value;
+
+        // Update display value of corresponding input field
+        if (ringInputField == null) return;
+        ringInputField.text = ((int)value).ToString();
+
+        // Enable 'generate' button
+        if (generateButton != null)
+        {
+            generateButton.interactable = true;
+        }
+    }
+
+    public void OnEditEndInputField(string value)
+    {
+        if (value.Length <= 0) value = "0";
+        numberOfRings = Mathf.Clamp(int.Parse(value), minRings, maxRings);
+        ringInputField.text = (Mathf.Clamp(int.Parse(value), minRings, maxRings)).ToString();
+    }
+
+    public void OnValueChangedInputField(string value)
+    {
+        if (value.Length <= 0) value = "0";
+        numberOfRings = Mathf.Clamp(int.Parse(value), minRings, maxRings);
+
+        // Update value of slider
+        if (ringSlider == null) return;
+        ringSlider.value = (int)float.Parse(value);
+
+        // Enable 'generate' button
+        if (generateButton != null)
+        {
+            generateButton.interactable = true;
+        }
+    }
+
+    public void OnClear()
+    {
+        // Clear gameobject
+        if (tilesGroup != null)
+        {
+            foreach(Transform child in tilesGroup.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        if (charactersGroup != null)
+        {
+            foreach(Transform child in charactersGroup.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        // Clear data structures
+        if (hexGrid != null)
+        {
+            hexGrid.ClearGrid();
+        }
+    }
+
+    public void OnGenerate()
+    {
+        GenerateTiles();
+        GenerateAxies();
+    }
+
+
+
+    public void TestValue(float value)
+    {
+        Debug.Log(value);
     }
 }
 
