@@ -61,7 +61,7 @@ public class PlayerInput : MonoBehaviour
             //testModel.TryDie();
             //testGaugeModel.SetGaugePercent(0.4f);
 
-            testModel.TryDie();
+            //testModel.TryDie();
         }
     }
 }
