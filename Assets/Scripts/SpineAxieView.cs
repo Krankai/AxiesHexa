@@ -12,6 +12,9 @@ public class SpineAxieView : MonoBehaviour
 
     SpineAxieModelState previousViewState;
 
+    int deathSetCounter = 0;        // max: 2 - include: 'die' animation and 'fade-out' animation
+    const int compareDeathCounter = 1;      // note: do not take into account 'die' animation anymore (since too long)
+
     // Start is called before the first frame update
     void Start()
     {
@@ -73,7 +76,12 @@ public class SpineAxieView : MonoBehaviour
         {
             if (model.currentHealth <= 0)
             {
-                model.TryDie();
+                //model.TryDie();
+                PlayDie();
+            }
+            else if (model.gameManager)
+            {
+                model.gameManager.FinishAxieAnimation();
             }
         };
     }
@@ -82,11 +90,24 @@ public class SpineAxieView : MonoBehaviour
     {
         var dieTrack = skeletonAnimation.AnimationState.SetAnimation(2, die, false);
         dieTrack.AttachmentThreshold = 1f;
-        dieTrack.MixDuration = 0f;
+        dieTrack.MixDuration = 0.5f;
         dieTrack.TrackEnd = float.PositiveInfinity;
 
-        // var empty = skeletonAnimation.state.AddEmptyAnimation(2, 0.5f, 0f);
+        // var empty = skeletonAnimation.state.AddEmptyAnimation(2, 0.2f, 0f);
         // empty.AttachmentThreshold = 1f;
+
+        //empty.End += delegate
+        dieTrack.Complete += delegate
+        {
+            // NOTE: "death" animation (stun) takes too long to complete/end -> remove this from counter to avoid delay
+            // Now only rely on fade-out duraction to decide whether "die" is done or not
+
+            // if (++deathSetCounter >= compareDeathCounter && model.gameManager)
+            // {
+            //     model.gameManager.FinishAxieAnimation();
+            //     Destroy(model.gameObject, 0.1f);
+            // }
+        };
 
         StartCoroutine(DieRoutine());
     }
@@ -95,7 +116,7 @@ public class SpineAxieView : MonoBehaviour
     {
         if (model.fadeOutDuration <= 0) yield break;
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.1f);
 
         // Fade out "skeleton" to simulate dying animation
         {
@@ -105,15 +126,24 @@ public class SpineAxieView : MonoBehaviour
             for (float t = 0f; t < model.fadeOutDuration; t += Time.deltaTime)
             {
                 float normalizedTime = t / model.fadeOutDuration;
-                skeletonAnimation.skeleton.a = Mathf.Lerp(startAlpha, endAlpha, normalizedTime);
+                float stepAlpha = Mathf.Lerp(startAlpha, endAlpha, normalizedTime);
+
+                skeletonAnimation.skeleton.a = stepAlpha;               // axie view
+                model.healthGauge.SetAlphaGaugeView(stepAlpha);         // health view
+
                 yield return null;
             }
             skeletonAnimation.skeleton.a = 0f;
+            model.healthGauge.SetAlphaGaugeView(0f);
+            model.healthGauge.gameObject.SetActive(false);
         }
 
-        model.state = SpineAxieModelState.Die;
-        
-        Destroy(model.gameObject, 0.5f);
+        //model.state = SpineAxieModelState.Die;
+        if (++this.deathSetCounter >= compareDeathCounter && model.gameManager)
+        {
+            model.gameManager.FinishAxieAnimation();
+            Destroy(model.gameObject, 0.1f);
+        }
     }
 
     public void Turn(bool facingLeft)

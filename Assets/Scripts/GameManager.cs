@@ -39,6 +39,10 @@ public class GameManager : MonoBehaviour
 
     Dictionary<TeamSet, TeamSet> battlePairs = new Dictionary<TeamSet, TeamSet>();
     Dictionary<TeamSet, HexTile> moveList = new Dictionary<TeamSet, HexTile>();
+    int countWaitingAxieAnimations = 0;     // number of axies that the manager is waiting for (to finish animation)
+    
+    [HideInInspector]
+    public bool isWaitingAxieAnimations = false;
 
     void Awake()
     {
@@ -51,11 +55,6 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // if (tilePrefab)
-        // {
-        //     Instantiate(tilePrefab, new Vector3Int(4, 0, 4), Quaternion.identity);
-        // }
-
         GenerateTiles();
         GenerateAxies();
         //grid.CheckLog();
@@ -75,7 +74,15 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (isWaitingAxieAnimations)
+        {
+            Debug.Log("Current count: " + countWaitingAxieAnimations);
+            if (countWaitingAxieAnimations <= 0)
+            {
+                isWaitingAxieAnimations = false;
+                Debug.Log("Can simulate next step...");
+            }
+        }
     }
 
     private bool GenerateTiles()
@@ -163,6 +170,11 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
+    public void FinishAxieAnimation()
+    {
+        --countWaitingAxieAnimations;
+    }
+
     public void SimulateStep()
     {
         // Traverse through all axies on the field
@@ -183,19 +195,12 @@ public class GameManager : MonoBehaviour
             {
                 HexTile examineTile = hexGrid.GetTileAt(coordinate);
                 if (examineTile == null) continue;                              // invalid tile
-                Debug.Log("Invalid tile: " + examineTile.HexCoords);
 
                 SpineAxieModel examineAxie = hexGrid.GetAxieAt(examineTile);
                 if (examineAxie == null) continue;                              // no axie
-                Debug.Log("Axie: " + examineAxie.axieType);
 
-                Debug.Log("Axie flag: " + examineAxie.flag + ", current flag: " + currentFlag);
                 if (examineAxie.flag == currentFlag) continue;                  // same flag means this axie has already been handled
 
-                Debug.Log(currentTile.HexCoords);
-                Debug.Log(currentAxie.axieType);
-                Debug.Log(examineTile.HexCoords);
-                Debug.Log(examineAxie.axieType);
                 if (examineAxie.axieType == currentAxie.axieType) continue;     // cannot attack Axie with same type (defense / attack)
 
                 // Can attack -> register both axies to handle battle later
@@ -251,19 +256,23 @@ public class GameManager : MonoBehaviour
             currentAxie.flag = currentFlag;
         }
 
+        isWaitingAxieAnimations = true;
+
+        // Update counter: number of axies to wait (for them to finish animation)
+        countWaitingAxieAnimations = battlePairs.Count * 2 + moveList.Count;
+        Debug.Log("Total: " + countWaitingAxieAnimations);
+
         // Simulate battle
-        Debug.Log(battlePairs.Count);
         SimulateAttack();
 
         // Simulate moving
-        Debug.Log(moveList.Count);
         SimulateMove();
 
         // Change current flag (basically, set all axies into not-handle state)
         currentFlag = (currentFlag == 1) ? 0 : 1;
     }
 
-    private void SimulateAttack()
+    public void SimulateAttack()
     {
         foreach (KeyValuePair<TeamSet, TeamSet> pair in battlePairs)
         {
@@ -273,16 +282,56 @@ public class GameManager : MonoBehaviour
             if (attackerSet.model == null) continue;
             if (defenderSet.model == null) continue;
 
+            if (attackerSet.tile)
+            {
+                attackerSet.model.opponentTile = defenderSet.tile.HexCoords;
+            }
+            if (defenderSet.tile)
+            {
+                defenderSet.model.opponentTile = attackerSet.tile.HexCoords;
+            }
+
+            // Turn both opponents towards each other
+            bool isAttackerBehind = (attackerSet.model.gameObject.transform.position.x < defenderSet.model.gameObject.transform.position.x);
+            if (attackerSet.model.facingLeft == defenderSet.model.facingLeft)   // same direction
+            {
+                bool isLeft = attackerSet.model.facingLeft;
+
+                if (isLeft)
+                {
+                    if (isAttackerBehind) attackerSet.model.facingLeft = false;
+                    else defenderSet.model.facingLeft = false;
+                }
+                else
+                {
+                    if (isAttackerBehind) defenderSet.model.facingLeft = true;
+                    else attackerSet.model.facingLeft = true;
+                }
+            }
+            else
+            {
+                if (isAttackerBehind && attackerSet.model.facingLeft == true)
+                {
+                    attackerSet.model.facingLeft = false;
+                    defenderSet.model.facingLeft = true;
+                }
+                else if (!isAttackerBehind && defenderSet.model.facingLeft == true)
+                {
+                    attackerSet.model.facingLeft = true;
+                    defenderSet.model.facingLeft = false;
+                }
+            }
+
             // Prepare for battle
             attackerSet.model.Prepare();
             defenderSet.model.Prepare();
 
             // Batte
-            attackerSet.model.TryAttack(defenderSet.model);
-            defenderSet.model.TryAttack(attackerSet.model);
+            bool attackSuccess = attackerSet.model.TryAttack(defenderSet.model);
+            bool counterSuccess = defenderSet.model.TryAttack(attackerSet.model);
 
             // Aftermath: update corresponding data structures and cleanup death axies
-            if (attackerSet.model.IsDeath && attackerSet.tile != null)
+            if (attackSuccess && attackerSet.model.IsDeath && attackerSet.tile != null)
             {
                 hexGrid.RemoveAxieAt(attackerSet.tile, attackerSet.model);
 
@@ -290,7 +339,7 @@ public class GameManager : MonoBehaviour
                 //Destroy(attackerSet.model.gameObject);
             }
 
-            if (defenderSet.model.IsDeath && defenderSet.tile != null)
+            if (counterSuccess && defenderSet.model.IsDeath && defenderSet.tile != null)
             {
                 hexGrid.RemoveAxieAt(defenderSet.tile, defenderSet.model);
 
@@ -303,7 +352,7 @@ public class GameManager : MonoBehaviour
         battlePairs.Clear();
     }
 
-    private void SimulateMove()
+    public void SimulateMove()
     {
         foreach (KeyValuePair<TeamSet, HexTile> pair in moveList)
         {
@@ -313,13 +362,15 @@ public class GameManager : MonoBehaviour
             if (axieSet.model == null) continue;
 
             // Move to tile
-            axieSet.model.TryMove(destinationTile.GetPositonForCharacter());
-
-            // Update corresponding data structures
-            hexGrid.PutAxieAt(destinationTile, axieSet.model);
-            if (axieSet.tile != null)
+            bool moveSuccess = axieSet.model.TryMove(destinationTile.GetPositonForCharacter());
+            if (moveSuccess)
             {
-                hexGrid.RemoveAxieAt(axieSet.tile, axieSet.model);
+                // Update corresponding data structures
+                hexGrid.PutAxieAt(destinationTile, axieSet.model);
+                if (axieSet.tile != null)
+                {
+                    hexGrid.RemoveAxieAt(axieSet.tile, axieSet.model);
+                }
             }
         }
 

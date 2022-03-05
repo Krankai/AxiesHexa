@@ -20,6 +20,7 @@ public class SpineAxieModel : MonoBehaviour
     [Header("Battle")]
     public int rollNumber;
     public int damage;
+    public Vector3Int opponentTile;
 
     [Header("Technical Details")]
     public int flag = 0;
@@ -35,10 +36,17 @@ public class SpineAxieModel : MonoBehaviour
 
     public bool IsDeath => currentHealth <= 0;
 
+    [HideInInspector]
+    public GameManager gameManager;
+
     void Start()
     {
-        fadeOutDuration = 0.8f;
+        lastAttackTime = Mathf.NegativeInfinity;
+        fadeOutDuration = 0.4f;
         currentHealth = maximumHealth;
+        opponentTile = new Vector3Int(99, 99, 99);
+
+        gameManager = FindObjectOfType<GameManager>();
     }
 
     public void Prepare()
@@ -46,16 +54,18 @@ public class SpineAxieModel : MonoBehaviour
         rollNumber = Random.Range(0, 3);
     }
 
-    public void TryMove(Vector3 destination)
+    public bool TryMove(Vector3 destination)
     {
-        if (immovable == true) return;
+        if (immovable == true) return false;
+
         StartCoroutine(MoveRoutine(destination));
+        return true;
     }
 
-    public void TryAttack(SpineAxieModel target)
+    public bool TryAttack(SpineAxieModel target)
     {
         // Can only attack while in idle mode
-        if (state != SpineAxieModelState.Idle) return;
+        if (state != SpineAxieModelState.Idle) return false;
 
         // Prevent repeated attack attemps
         float currentTime = Time.time;
@@ -71,8 +81,12 @@ public class SpineAxieModel : MonoBehaviour
             {
                 damage = CalculateDamage(rollNumber, target.rollNumber);
                 target.OnReceiveDamage(damage);
+
+                //Debug.Log("Deal damage: " + damage + " (roll: " + rollNumber + ") - Health: " + target.currentHealth);
             }
         }
+
+        return true;
     }
 
     public void TryDie()
@@ -99,6 +113,11 @@ public class SpineAxieModel : MonoBehaviour
         }
 
         state = SpineAxieModelState.Idle;
+
+        if (gameManager)
+        {
+            gameManager.FinishAxieAnimation();
+        }
     }
 
     private int CalculateDamage(int attackerRoll, int defenderRoll)
@@ -138,7 +157,7 @@ public enum SpineAxieModelState
 {
     Idle,
     Moving,
-    Die
+    //Die
 }
 
 public enum AxieType

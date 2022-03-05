@@ -8,7 +8,6 @@ public class SpineGauge : MonoBehaviour
     [Range(0, 1)]
     public float fillPercent;
     public AnimationReferenceAsset fillAnimation;
-    public bool visible = true;
 
     SkeletonRenderer skeletonRenderer;
     float fillSpeed = 1f;
@@ -20,10 +19,14 @@ public class SpineGauge : MonoBehaviour
         currentPercent = 1f;
     }
 
+    public void SetAlphaGaugeView(float alpha)
+    {
+        if (skeletonRenderer == null | skeletonRenderer.skeleton == null) return;
+        skeletonRenderer.skeleton.a = alpha;
+    }
+
     public void SetGaugePercent(float percent)
     {
-        if (visible == false) return;
-
         StartCoroutine(GaugeRountine(percent));
         currentPercent = percent;
     }
