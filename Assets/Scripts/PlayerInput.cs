@@ -54,6 +54,16 @@ public class PlayerInput : MonoBehaviour
             // {
             //     manager.SimulateAttack();
             // }
+
+            if (gameManager != null)
+            {
+                if (gameManager.isWaitingAxieAnimations)
+                {
+                    Debug.Log("Cannot. Still waiting!!!");
+                    return;
+                }
+                gameManager.SimulateStep();
+            }
         }
 
         if (Input.GetButtonDown("Fire3"))

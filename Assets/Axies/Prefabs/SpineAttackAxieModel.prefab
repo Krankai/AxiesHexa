@@ -81,7 +81,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: axieType
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3027668343627078601, guid: d90ba238d7ec76049878896648ba8cde, type: 3}
       propertyPath: immovable

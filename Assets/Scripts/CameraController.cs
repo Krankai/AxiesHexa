@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
+    public GameManager gameManager;
+
     #region Zooming
     [Header("Zooming")]
     public float maxZoom = 5;
@@ -11,6 +13,7 @@ public class CameraController : MonoBehaviour
     public float sensitivityZoom = 1;
     public float speed = 30;
     float targetZoom;
+    float originalZoom;
     #endregion
 
     #region Dragging
@@ -21,13 +24,14 @@ public class CameraController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        targetZoom = 30;
+        originalZoom = targetZoom = 30;
     }
 
     // Update is called once per frame
     void Update()
     {
         if (Camera.main == null) return;
+        if (gameManager == null || !gameManager.IsGameStarted()) return;
 
         // Zooming
         targetZoom -= Input.mouseScrollDelta.y * sensitivityZoom;
@@ -43,6 +47,11 @@ public class CameraController : MonoBehaviour
 
             Camera.main.transform.position += new Vector3(-mouseDeltaX, 0, -mouseDeltaY) * sensitivityDrag;
         }
+    }
+
+    public void ResetOriginalCamera()
+    {
+        Camera.main.orthographicSize = targetZoom = originalZoom;
     }
 
     private Vector3 GetMousePositionOnZ(float valueZ)

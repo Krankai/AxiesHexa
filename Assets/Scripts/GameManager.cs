@@ -32,18 +32,17 @@ public class GameManager : MonoBehaviour
     private GameObject attackAxiePrefab;
     #endregion
 
-    #region Input Control
-    [Header("Input Control")]
+    #region Control System
+    [Header("Control System")]
     public InputField ringInputField;
     public Slider ringSlider;
     public Button generateButton;
     public Button clearButton;
     public Button simulateButton;
+    public PlaybackControls playbackControls;
+    public GameOverScreenController gameoverController;
+    public float delayGameOverMessage = 1;
     #endregion
-
-    [Header("Test")]
-    public SpineAxieModel attacker;
-    public SpineAxieModel defender;
 
     int currentFlag = 1;
 
@@ -52,21 +51,58 @@ public class GameManager : MonoBehaviour
     int countWaitingAxieAnimations = 0;     // number of axies that the manager is waiting for (to finish animation)
     
     [HideInInspector]
-    public bool isWaitingAxieAnimations = false;
+    public bool isWaitingAxieAnimations;
+    [HideInInspector]
+    public bool isGenerated;
+    [HideInInspector]
+    public bool isSelectValue;
+    
+    bool isStarted;
+    bool isFinished;
+    bool isAllowTryAgain;
+
+    int countDefenders;
+    int countAttackers;
+
+    public void OnDefenderDeath() => --countDefenders;
+    public void OnAttackerDeath() => --countAttackers;
+    public bool IsGameStarted() => isStarted;
 
     void Awake()
     {
-        if (hexGrid == null)
-        {
-            hexGrid = GetComponentInChildren<HexGrid>();
-        }
+        if (hexGrid == null) hexGrid = GetComponentInChildren<HexGrid>();
+        if (playbackControls == null) playbackControls = GetComponentInChildren<PlaybackControls>();
 
         // Set min/max for slider
+        if (ringSlider != null)
+        {
+            ringSlider.minValue = minRings;
+            ringSlider.maxValue = maxRings;
+        }
+
+        isWaitingAxieAnimations = false;
+        isGenerated = false;
+        isSelectValue = false;
+        isStarted = false;
+        isFinished = false;
+        isAllowTryAgain = false;
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        if (generateButton != null)
+        {
+            generateButton.interactable = false;
+        }
+        if (simulateButton != null)
+        {
+            simulateButton.interactable = false;
+        }
+
+        if (playbackControls != null) playbackControls.gameObject.SetActive(false);
+        if (gameoverController != null) gameoverController.gameObject.SetActive(false);
+
         // GenerateTiles();
         // GenerateAxies();
         //grid.CheckLog();
@@ -86,13 +122,29 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isWaitingAxieAnimations)
+        if (isSelectValue && generateButton != null) generateButton.interactable = !isGenerated;
+        
+        if (isStarted && !isFinished)
         {
-            //Debug.Log("Current count: " + countWaitingAxieAnimations);
-            if (countWaitingAxieAnimations <= 0)
+            if (isWaitingAxieAnimations)
             {
-                isWaitingAxieAnimations = false;
-                //Debug.Log("Can simulate next step...");
+                //Debug.Log("Current count: " + countWaitingAxieAnimations);
+                if (countWaitingAxieAnimations <= 0)
+                {
+                    isWaitingAxieAnimations = false;
+                    //Debug.Log("Can simulate next step...");
+                }
+            }
+            else
+            {
+                AxieType winnerType = AxieType.Default;
+                if (HaveWinner(out winnerType))
+                {
+                    isFinished = true;
+
+                    // Show gameover message
+                    StartCoroutine(ShowGameOverMessage(winnerType));
+                }
             }
         }
     }
@@ -169,10 +221,12 @@ public class GameManager : MonoBehaviour
             if (tile.type == TileType.Attack)
             {
                 axieObject = hexGrid.GenerateAxieAt(tile, attackAxiePrefab);
+                if (axieObject != null) ++countAttackers;
             }
             else if (tile.type == TileType.Defense)
             {
                 axieObject = hexGrid.GenerateAxieAt(tile, defenseAxiePrefab);
+                if (axieObject != null) ++countDefenders;
             }
 
             if (axieObject && charactersGroup)
@@ -184,13 +238,49 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
-    public void FinishAxieAnimation()
+    public void OnFinishAxieAnimation()
     {
         --countWaitingAxieAnimations;
     }
 
+    public bool HaveWinner(out AxieType winnerType)
+    {
+        winnerType = AxieType.Default;
+        if (!isStarted) return false;
+
+        bool haveWinner = countAttackers <= 0 || countDefenders <= 0;
+        if (haveWinner)
+        {
+            winnerType = (countAttackers <= 0) ? AxieType.Defense : AxieType.Attack;
+        }
+
+        return haveWinner;
+    }
+
+    IEnumerator ShowGameOverMessage(AxieType winnerType)
+    {
+        if (winnerType == AxieType.Default) yield break;
+        if (gameoverController == null) yield break;
+
+        yield return new WaitForSeconds(delayGameOverMessage);
+
+        if (winnerType == AxieType.Defense)
+        {
+            gameoverController.OnDefendersWin();
+        }
+        else // if (winnerType == AxieType.Attack)
+        {
+            gameoverController.OnAttackersWin();
+        }
+
+        isAllowTryAgain = true;
+
+        yield return null;
+    }
+
     public void SimulateStep()
     {
+        if (!isStarted || isFinished) return;
         if (hexGrid == null) return;
         if (hexGrid.GetCountTiles() <= 0 || hexGrid.GetCountAxies() <= 0) return;
 
@@ -348,20 +438,20 @@ public class GameManager : MonoBehaviour
             bool counterSuccess = defenderSet.model.TryAttack(attackerSet.model);
 
             // Aftermath: update corresponding data structures and cleanup death axies
-            if (attackSuccess && attackerSet.model.IsDeath && attackerSet.tile != null)
-            {
-                hexGrid.RemoveAxieAt(attackerSet.tile, attackerSet.model);
-
-                // NOTE: only Destroy gameobject after finish "dying" animation
-                //Destroy(attackerSet.model.gameObject);
-            }
-
-            if (counterSuccess && defenderSet.model.IsDeath && defenderSet.tile != null)
+            if (attackSuccess && defenderSet.model.IsDeath && defenderSet.tile != null)
             {
                 hexGrid.RemoveAxieAt(defenderSet.tile, defenderSet.model);
 
                 // NOTE: only Destroy gameobject after finish "dying" animation
                 //Destroy(defenderSet.model.gameObject);
+            }
+
+            if (counterSuccess && attackerSet.model.IsDeath && attackerSet.tile != null)
+            {
+                hexGrid.RemoveAxieAt(attackerSet.tile, attackerSet.model);
+
+                // NOTE: only Destroy gameobject after finish "dying" animation
+                //Destroy(attackerSet.model.gameObject);
             }
         }
 
@@ -397,6 +487,7 @@ public class GameManager : MonoBehaviour
 
     public void OnValueChangedRingSlider(float value)
     {
+        isSelectValue = true;
         numberOfRings = (int)value;
 
         // Update display value of corresponding input field
@@ -404,10 +495,7 @@ public class GameManager : MonoBehaviour
         ringInputField.text = ((int)value).ToString();
 
         // Enable 'generate' button
-        if (generateButton != null)
-        {
-            generateButton.interactable = true;
-        }
+        //if (generateButton != null && !isGenerated) generateButton.interactable = true;
     }
 
     public void OnEditEndInputField(string value)
@@ -419,6 +507,8 @@ public class GameManager : MonoBehaviour
 
     public void OnValueChangedInputField(string value)
     {
+        isSelectValue = true;
+
         if (value.Length <= 0) value = "0";
         numberOfRings = Mathf.Clamp(int.Parse(value), minRings, maxRings);
 
@@ -427,15 +517,12 @@ public class GameManager : MonoBehaviour
         ringSlider.value = (int)float.Parse(value);
 
         // Enable 'generate' button
-        if (generateButton != null)
-        {
-            generateButton.interactable = true;
-        }
+        //if (generateButton != null && !isGenerated) generateButton.interactable = true;
     }
 
     public void OnClear()
     {
-        // Clear gameobject
+        // Clear object data
         if (tilesGroup != null)
         {
             foreach(Transform child in tilesGroup.transform)
@@ -443,7 +530,6 @@ public class GameManager : MonoBehaviour
                 Destroy(child.gameObject);
             }
         }
-
         if (charactersGroup != null)
         {
             foreach(Transform child in charactersGroup.transform)
@@ -452,17 +538,91 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Clear data structures
-        if (hexGrid != null)
-        {
-            hexGrid.ClearGrid();
-        }
+        if (hexGrid != null) hexGrid.ClearGrid();
+        isGenerated = false;
+        countDefenders = countAttackers = 0;
+
+        // Disable 'simulate' button
+        if (simulateButton != null) simulateButton.interactable = false;
+        
+        // Reenable 'generate' button
+        if (generateButton != null) generateButton.interactable = true;
     }
 
     public void OnGenerate()
     {
+        // Generate game objects
         GenerateTiles();
         GenerateAxies();
+
+        isGenerated = true;
+
+        // Enable 'simulate' button
+        if (simulateButton != null) simulateButton.interactable = true;
+    }
+
+    public void OnSimulate()
+    {
+        // Disable all input and corresponding button controls
+        ToggleInitialInputAndButtonControls(false);
+
+        // Enable playback control buttons
+        if (playbackControls != null)
+        {
+            playbackControls.gameObject.SetActive(true);
+        }
+
+        // Initiate countdown into simulation's start (?)
+        isStarted = true;
+    }
+
+    public void ReSetup()
+    {
+        OnClear();
+
+        // Re-init fields
+        isWaitingAxieAnimations = false;
+        isGenerated = false;
+        //isSelectValue = false;
+        isStarted = false;
+        isFinished = false;
+        isAllowTryAgain = false;
+
+        // Reset state of input and button controls
+        ToggleInitialInputAndButtonControls(true);
+        
+        if (ringInputField != null) ringInputField.text = "";
+        isSelectValue = false;
+
+        if (generateButton != null) generateButton.interactable = false;
+        if (simulateButton != null) simulateButton.interactable = false;
+
+        // Hide playback controls
+        if (playbackControls)
+        {
+            playbackControls.gameObject.SetActive(false);
+        }
+
+        // Hide gameover panels
+        if (gameoverController)
+        {
+            gameoverController.gameObject.SetActive(false);
+        }
+
+        CameraController cameraController = Camera.main.GetComponent<CameraController>();
+        if (cameraController != null)
+        {
+            cameraController.ResetOriginalCamera();
+        }
+    }
+
+    private void ToggleInitialInputAndButtonControls(bool interactable)
+    {
+        if (ringInputField != null) ringInputField.interactable = interactable;
+        if (ringSlider != null) ringSlider.interactable = interactable;
+        if (generateButton != null) generateButton.interactable = interactable;
+        if (clearButton != null) clearButton.interactable = interactable;
+        if (simulateButton != null) simulateButton.interactable = interactable;
     }
 
 
@@ -484,3 +644,12 @@ public class TeamSet
         this.tile = tile;
     }
 }
+
+// [System.Serializable]
+// public class PlaybackControl
+// {
+//     public Button play;
+//     public Button pause;
+//     public Button next;
+//     public Button prev;
+// }

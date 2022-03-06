@@ -116,7 +116,7 @@ public class SpineAxieModel : MonoBehaviour
 
         if (gameManager)
         {
-            gameManager.FinishAxieAnimation();
+            gameManager.OnFinishAxieAnimation();
         }
     }
 
@@ -162,6 +162,7 @@ public enum SpineAxieModelState
 
 public enum AxieType
 {
+    Default,
     Attack,
     Defense
 }

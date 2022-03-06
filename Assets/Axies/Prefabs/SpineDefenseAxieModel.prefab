@@ -176,7 +176,7 @@ MonoBehaviour:
   facingLeft: 0
   currentHealth: 30
   maximumHealth: 30
-  axieType: 1
+  axieType: 2
   immovable: 1
   rollNumber: 0
   damage: 0

@@ -81,7 +81,7 @@ public class SpineAxieView : MonoBehaviour
             }
             else if (model.gameManager)
             {
-                model.gameManager.FinishAxieAnimation();
+                model.gameManager.OnFinishAxieAnimation();
             }
         };
     }
@@ -141,7 +141,17 @@ public class SpineAxieView : MonoBehaviour
         //model.state = SpineAxieModelState.Die;
         if (++this.deathSetCounter >= compareDeathCounter && model.gameManager)
         {
-            model.gameManager.FinishAxieAnimation();
+            model.gameManager.OnFinishAxieAnimation();
+
+            if (model.axieType == AxieType.Defense)
+            {
+                model.gameManager.OnDefenderDeath();
+            }
+            else if (model.axieType == AxieType.Attack)
+            {
+                model.gameManager.OnAttackerDeath();
+            }
+
             Destroy(model.gameObject, 0.1f);
         }
     }
