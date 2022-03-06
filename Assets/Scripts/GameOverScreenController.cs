@@ -9,6 +9,7 @@ public class GameOverScreenController : MonoBehaviour
     public RawImage background;
     public Text defenderWinText;
     public Text attackerWinText;
+    public Text drawText;
 
     public Button returnButton;
     public Button tryAgainButton;
@@ -32,6 +33,7 @@ public class GameOverScreenController : MonoBehaviour
         background.gameObject.SetActive(true);
         defenderWinText.gameObject.SetActive(true);
         attackerWinText.gameObject.SetActive(false);
+        drawText.gameObject.SetActive(false);
 
         returnButton.gameObject.SetActive(true); returnButton.interactable = true;
         tryAgainButton.gameObject.SetActive(true); tryAgainButton.interactable = true;
@@ -44,6 +46,21 @@ public class GameOverScreenController : MonoBehaviour
 
         background.gameObject.SetActive(true);
         attackerWinText.gameObject.SetActive(true);
+        defenderWinText.gameObject.SetActive(false);
+        drawText.gameObject.SetActive(false);
+
+        returnButton.gameObject.SetActive(true); returnButton.interactable = true;
+        tryAgainButton.gameObject.SetActive(true); tryAgainButton.interactable = true;
+        bigTryAgainButton.gameObject.SetActive(false);
+    }
+
+    public void OnDraw()
+    {
+        gameObject.SetActive(true);
+
+        background.gameObject.SetActive(true);
+        drawText.gameObject.SetActive(true);
+        attackerWinText.gameObject.SetActive(false);
         defenderWinText.gameObject.SetActive(false);
 
         returnButton.gameObject.SetActive(true); returnButton.interactable = true;

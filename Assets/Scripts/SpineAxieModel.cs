@@ -164,5 +164,6 @@ public enum AxieType
 {
     Default,
     Attack,
-    Defense
+    Defense,
+    Both
 }

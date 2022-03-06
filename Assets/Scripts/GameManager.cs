@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
     public float scaleFactor = 1f;
     public int numberOfRings = 1;
     const int minRings = 3;
-    const int maxRings = 10;
+    const int maxRings = 11;
     #endregion
 
     #region Characters
@@ -42,9 +42,10 @@ public class GameManager : MonoBehaviour
     public PlaybackControls playbackControls;
     public GameOverScreenController gameoverController;
     public float delayGameOverMessage = 1;
+    public Text countdownText;
     #endregion
 
-    int currentFlag = 1;
+    int currentFlag = 1;        // to check: whether current axie/character was handled or not (avoid handling 1 char twice)
 
     Dictionary<TeamSet, TeamSet> battlePairs = new Dictionary<TeamSet, TeamSet>();
     Dictionary<TeamSet, HexTile> moveList = new Dictionary<TeamSet, HexTile>();
@@ -67,6 +68,7 @@ public class GameManager : MonoBehaviour
     public void OnDefenderDeath() => --countDefenders;
     public void OnAttackerDeath() => --countAttackers;
     public bool IsGameStarted() => isStarted;
+    public bool IsObjectsGenerated() => isGenerated;
 
     void Awake()
     {
@@ -95,13 +97,26 @@ public class GameManager : MonoBehaviour
         {
             generateButton.interactable = false;
         }
+
         if (simulateButton != null)
         {
             simulateButton.interactable = false;
         }
 
-        if (playbackControls != null) playbackControls.gameObject.SetActive(false);
-        if (gameoverController != null) gameoverController.gameObject.SetActive(false);
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(false);
+        }
+
+        if (playbackControls != null) 
+        {
+            playbackControls.gameObject.SetActive(false);
+        }
+
+        if (gameoverController != null)
+        {
+            gameoverController.gameObject.SetActive(false);
+        }
 
         // GenerateTiles();
         // GenerateAxies();
@@ -142,8 +157,15 @@ public class GameManager : MonoBehaviour
                 {
                     isFinished = true;
 
+                    // Disable playback controls
+                    if (playbackControls) playbackControls.ToggleButtons(false);
+
                     // Show gameover message
                     StartCoroutine(ShowGameOverMessage(winnerType));
+                }
+                else
+                {
+                    SimulateStep();
                 }
             }
         }
@@ -251,7 +273,14 @@ public class GameManager : MonoBehaviour
         bool haveWinner = countAttackers <= 0 || countDefenders <= 0;
         if (haveWinner)
         {
-            winnerType = (countAttackers <= 0) ? AxieType.Defense : AxieType.Attack;
+            if (countAttackers <= 0 && countDefenders <= 0)
+            {
+                winnerType = AxieType.Both;
+            }
+            else
+            {
+                winnerType = (countAttackers <= 0) ? AxieType.Defense : AxieType.Attack;
+            }
         }
 
         return haveWinner;
@@ -268,9 +297,13 @@ public class GameManager : MonoBehaviour
         {
             gameoverController.OnDefendersWin();
         }
-        else // if (winnerType == AxieType.Attack)
+        else if (winnerType == AxieType.Attack)
         {
             gameoverController.OnAttackersWin();
+        }
+        else if (winnerType == AxieType.Both)
+        {
+            gameoverController.OnDraw();
         }
 
         isAllowTryAgain = true;
@@ -522,6 +555,13 @@ public class GameManager : MonoBehaviour
 
     public void OnClear()
     {
+        // Reset camera
+        CameraController cameraController = Camera.main.GetComponent<CameraController>();
+        if (cameraController != null)
+        {
+            cameraController.ResetOriginalCamera();
+        }
+
         // Clear object data
         if (tilesGroup != null)
         {
@@ -545,12 +585,20 @@ public class GameManager : MonoBehaviour
         // Disable 'simulate' button
         if (simulateButton != null) simulateButton.interactable = false;
         
-        // Reenable 'generate' button
+        // Re-enable 'generate' button
         if (generateButton != null) generateButton.interactable = true;
     }
 
     public void OnGenerate()
     {
+        // Adjust camera(s) accordingly
+        CameraController cameraController = Camera.main.GetComponent<CameraController>();
+        if (cameraController)
+        {
+            cameraController.AdjustMainCamera(numberOfRings);
+            cameraController.AdjustMiniMapcamera(numberOfRings);
+        }
+
         // Generate game objects
         GenerateTiles();
         GenerateAxies();
@@ -570,10 +618,18 @@ public class GameManager : MonoBehaviour
         if (playbackControls != null)
         {
             playbackControls.gameObject.SetActive(true);
+            playbackControls.ToggleButtons(false);
         }
 
-        // Initiate countdown into simulation's start (?)
-        isStarted = true;
+        // Reset camera
+        CameraController cameraController = Camera.main.GetComponent<CameraController>();
+        if (cameraController != null)
+        {
+            cameraController.ResetOriginalCamera();
+        }
+
+        // Initiate countdown into simulation's start
+        StartCoroutine(CountDownStartGame());
     }
 
     public void ReSetup()
@@ -590,7 +646,7 @@ public class GameManager : MonoBehaviour
 
         // Reset state of input and button controls
         ToggleInitialInputAndButtonControls(true);
-        
+
         if (ringInputField != null) ringInputField.text = "";
         isSelectValue = false;
 
@@ -600,6 +656,7 @@ public class GameManager : MonoBehaviour
         // Hide playback controls
         if (playbackControls)
         {
+            playbackControls.ResetTimeScale();
             playbackControls.gameObject.SetActive(false);
         }
 
@@ -607,12 +664,6 @@ public class GameManager : MonoBehaviour
         if (gameoverController)
         {
             gameoverController.gameObject.SetActive(false);
-        }
-
-        CameraController cameraController = Camera.main.GetComponent<CameraController>();
-        if (cameraController != null)
-        {
-            cameraController.ResetOriginalCamera();
         }
     }
 
@@ -625,11 +676,36 @@ public class GameManager : MonoBehaviour
         if (simulateButton != null) simulateButton.interactable = interactable;
     }
 
-
-
-    public void TestValue(float value)
+    IEnumerator CountDownStartGame()
     {
-        Debug.Log(value);
+        yield return new WaitForEndOfFrame();
+
+        if (countdownText == null)
+        {
+            yield return new WaitForSeconds(3);
+            yield break;
+        }
+        
+        countdownText.gameObject.SetActive(true);
+        countdownText.text = "3";
+        yield return new WaitForSeconds(1);
+
+        countdownText.text = "2";
+        yield return new WaitForSeconds(1);
+
+        countdownText.text = "1";
+        yield return new WaitForSeconds(1);
+
+        countdownText.text = "START";
+        yield return new WaitForSeconds(1);
+        countdownText.gameObject.SetActive(false);
+
+        isStarted = true;
+
+        if (playbackControls)
+        {
+            playbackControls.ToggleButtons(true);
+        }
     }
 }
 
