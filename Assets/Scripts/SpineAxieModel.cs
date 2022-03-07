@@ -116,6 +116,7 @@ public class SpineAxieModel : MonoBehaviour
 
         if (gameManager)
         {
+            Debug.Log("[" + axieType + gameManager.i + "] Move to destination: " + destination);
             gameManager.OnFinishAxieAnimation();
         }
     }

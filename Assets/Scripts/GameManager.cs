@@ -17,8 +17,10 @@ public class GameManager : MonoBehaviour
     private GameObject attackTilePrefab;
     [SerializeField]
     private GameObject barrierTilePrefab;
+
     public float scaleFactor = 1f;
     public int numberOfRings = 1;
+
     const int minRings = 3;
     const int maxRings = 11;
     #endregion
@@ -36,39 +38,40 @@ public class GameManager : MonoBehaviour
     [Header("Control System")]
     public InputField ringInputField;
     public Slider ringSlider;
+
     public Button generateButton;
     public Button clearButton;
     public Button simulateButton;
-    public PlaybackControls playbackControls;
-    public GameOverScreenController gameoverController;
-    public float delayGameOverMessage = 1;
-    public Text countdownText;
-    #endregion
 
-    int currentFlag = 1;        // to check: whether current axie/character was handled or not (avoid handling 1 char twice)
+    public PlaybackControls playbackControls;
+
+    public GameOverScreenController gameoverController;
+
+    public Text countdownText;
+
+    public float delayGameOverMessage = 1;
+    #endregion
 
     Dictionary<TeamSet, TeamSet> battlePairs = new Dictionary<TeamSet, TeamSet>();
     Dictionary<TeamSet, HexTile> moveList = new Dictionary<TeamSet, HexTile>();
-    int countWaitingAxieAnimations = 0;     // number of axies that the manager is waiting for (to finish animation)
-    
-    [HideInInspector]
-    public bool isWaitingAxieAnimations;
-    [HideInInspector]
-    public bool isGenerated;
-    [HideInInspector]
-    public bool isSelectValue;
-    
+
+    public int countWaitingAxieAnimations = 0;     // number of axies that the manager is waiting for (to finish animation)
+    public int countDefenders;
+    public int countAttackers;
+    int currentFlag = 1;        // to check: whether current axie/character was handled or not (avoid handling 1 char twice)
+
+    bool isWaitingAxieAnimations;
+    bool isGenerated;
+    bool isSelectValue;
     bool isStarted;
     bool isFinished;
-    bool isAllowTryAgain;
-
-    int countDefenders;
-    int countAttackers;
 
     public void OnDefenderDeath() => --countDefenders;
     public void OnAttackerDeath() => --countAttackers;
     public bool IsGameStarted() => isStarted;
     public bool IsObjectsGenerated() => isGenerated;
+
+    public int i = 0; // test
 
     void Awake()
     {
@@ -87,58 +90,26 @@ public class GameManager : MonoBehaviour
         isSelectValue = false;
         isStarted = false;
         isFinished = false;
-        isAllowTryAgain = false;
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        if (generateButton != null)
-        {
-            generateButton.interactable = false;
-        }
+        if (generateButton != null) generateButton.interactable = false;
+        if (simulateButton != null) simulateButton.interactable = false;
 
-        if (simulateButton != null)
-        {
-            simulateButton.interactable = false;
-        }
+        if (countdownText != null) countdownText.gameObject.SetActive(false);
 
-        if (countdownText != null)
-        {
-            countdownText.gameObject.SetActive(false);
-        }
+        if (playbackControls != null) playbackControls.gameObject.SetActive(false);
 
-        if (playbackControls != null) 
-        {
-            playbackControls.gameObject.SetActive(false);
-        }
-
-        if (gameoverController != null)
-        {
-            gameoverController.gameObject.SetActive(false);
-        }
-
-        // GenerateTiles();
-        // GenerateAxies();
-        //grid.CheckLog();
-
-        // GameObject testObject = Instantiate(attackAxiePrefab, new Vector3(0, 1.05f, 0), attackAxiePrefab.transform.rotation);
-        // if (charactersGroup)
-        // {
-        //     testObject.transform.parent = charactersGroup.transform;
-        // }
-        
-        // TeamSet attackTeam = new TeamSet(attacker, null);
-        // TeamSet defendTeam = new TeamSet(defender, null);
-
-        // battlePairs[attackTeam] = defendTeam;
+        if (gameoverController != null) gameoverController.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
         if (isSelectValue && generateButton != null) generateButton.interactable = !isGenerated;
-        
+
         if (isStarted && !isFinished)
         {
             if (isWaitingAxieAnimations)
@@ -212,7 +183,7 @@ public class GameManager : MonoBehaviour
             {
                 usedTilePrefab = attackTilePrefab;
             }
-            
+
             // Generate and add all corresponding tiles
             foreach (Vector3Int hexCoordinates in hexGrid.GetTilesOnRing(i))
             {
@@ -306,13 +277,13 @@ public class GameManager : MonoBehaviour
             gameoverController.OnDraw();
         }
 
-        isAllowTryAgain = true;
-
         yield return null;
     }
 
     public void SimulateStep()
     {
+        Debug.Log("New step " + i++);
+
         if (!isStarted || isFinished) return;
         if (hexGrid == null) return;
         if (hexGrid.GetCountTiles() <= 0 || hexGrid.GetCountAxies() <= 0) return;
@@ -371,7 +342,7 @@ public class GameManager : MonoBehaviour
                 SpineAxieModel possibleAxie = hexGrid.GetAxieAt(examineTile);
                 if (possibleAxie != null) continue;                             // occupied hence cannot move into
 
-                float examineDistanceToCenter = Mathf.Abs(examineTile.HexCoords.x) + Mathf.Abs(examineTile.HexCoords.y) + Mathf.Abs(examineTile.HexCoords.z);                
+                float examineDistanceToCenter = Mathf.Abs(examineTile.HexCoords.x) + Mathf.Abs(examineTile.HexCoords.y) + Mathf.Abs(examineTile.HexCoords.z);
                 if (examineDistanceToCenter >= currentDistanceToCenter)         // if not closer to center, don't move
                 {
                     continue;
@@ -400,7 +371,6 @@ public class GameManager : MonoBehaviour
 
         // Update counter: number of axies to wait (for them to finish animation)
         countWaitingAxieAnimations = battlePairs.Count * 2 + moveList.Count;
-        //Debug.Log("Total: " + countWaitingAxieAnimations);
 
         // Simulate battle
         SimulateAttack();
@@ -526,9 +496,6 @@ public class GameManager : MonoBehaviour
         // Update display value of corresponding input field
         if (ringInputField == null) return;
         ringInputField.text = ((int)value).ToString();
-
-        // Enable 'generate' button
-        //if (generateButton != null && !isGenerated) generateButton.interactable = true;
     }
 
     public void OnEditEndInputField(string value)
@@ -548,31 +515,25 @@ public class GameManager : MonoBehaviour
         // Update value of slider
         if (ringSlider == null) return;
         ringSlider.value = (int)float.Parse(value);
-
-        // Enable 'generate' button
-        //if (generateButton != null && !isGenerated) generateButton.interactable = true;
     }
 
     public void OnClear()
     {
         // Reset camera
         CameraController cameraController = Camera.main.GetComponent<CameraController>();
-        if (cameraController != null)
-        {
-            cameraController.ResetOriginalCamera();
-        }
+        if (cameraController != null) cameraController.ResetOriginalCamera();
 
         // Clear object data
         if (tilesGroup != null)
         {
-            foreach(Transform child in tilesGroup.transform)
+            foreach (Transform child in tilesGroup.transform)
             {
                 Destroy(child.gameObject);
             }
         }
         if (charactersGroup != null)
         {
-            foreach(Transform child in charactersGroup.transform)
+            foreach (Transform child in charactersGroup.transform)
             {
                 Destroy(child.gameObject);
             }
@@ -582,11 +543,10 @@ public class GameManager : MonoBehaviour
         isGenerated = false;
         countDefenders = countAttackers = 0;
 
-        // Disable 'simulate' button
+        // Disable buttons
         if (simulateButton != null) simulateButton.interactable = false;
-        
-        // Re-enable 'generate' button
         if (generateButton != null) generateButton.interactable = true;
+        isGenerated = false;
     }
 
     public void OnGenerate()
@@ -642,7 +602,6 @@ public class GameManager : MonoBehaviour
         //isSelectValue = false;
         isStarted = false;
         isFinished = false;
-        isAllowTryAgain = false;
 
         // Reset state of input and button controls
         ToggleInitialInputAndButtonControls(true);
@@ -685,7 +644,7 @@ public class GameManager : MonoBehaviour
             yield return new WaitForSeconds(3);
             yield break;
         }
-        
+
         countdownText.gameObject.SetActive(true);
         countdownText.text = "3";
         yield return new WaitForSeconds(1);

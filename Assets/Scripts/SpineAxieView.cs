@@ -81,6 +81,7 @@ public class SpineAxieView : MonoBehaviour
             }
             else if (model.gameManager)
             {
+                Debug.Log("[" + model.axieType + model.gameManager.i + "] Attack at position: " + model.gameObject.transform.position);
                 model.gameManager.OnFinishAxieAnimation();
             }
         };
@@ -141,6 +142,7 @@ public class SpineAxieView : MonoBehaviour
         //model.state = SpineAxieModelState.Die;
         if (++this.deathSetCounter >= compareDeathCounter && model.gameManager)
         {
+            Debug.Log("[" + model.axieType + model.gameManager.i + "] Die at position: " + model.gameObject.transform.position);
             model.gameManager.OnFinishAxieAnimation();
 
             if (model.axieType == AxieType.Defense)
