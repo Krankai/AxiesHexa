@@ -16,16 +16,6 @@ public class GameOverScreenController : MonoBehaviour
     public Button bigTryAgainButton;
 
 
-    void Awake()
-    {
-        // if (background != null) background.gameObject.SetActive(false);
-        // if (defenderWinText != null) defenderWinText.gameObject.SetActive(false);
-        // if (attackerWinText != null) attackerWinText.gameObject.SetActive(false);
-        // if (returnButton != null) returnButton.gameObject.SetActive(false);
-        // if (tryAgainButton != null) tryAgainButton.gameObject.SetActive(false);
-        // if (bigTryAgainButton != null) bigTryAgainButton.gameObject.SetActive(false);
-    }
-
     public void OnDefendersWin()
     {
         gameObject.SetActive(true);

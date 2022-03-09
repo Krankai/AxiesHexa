@@ -55,9 +55,9 @@ public class GameManager : MonoBehaviour
     Dictionary<TeamSet, TeamSet> battlePairs = new Dictionary<TeamSet, TeamSet>();
     Dictionary<TeamSet, HexTile> moveList = new Dictionary<TeamSet, HexTile>();
 
-    public int countWaitingAxieAnimations = 0;     // number of axies that the manager is waiting for (to finish animation)
-    public int countDefenders;
-    public int countAttackers;
+    int countWaitingAxieAnimations = 0;     // number of axies that the manager is waiting for (to finish animation)
+    int countDefenders;
+    int countAttackers;
     int currentFlag = 1;        // to check: whether current axie/character was handled or not (avoid handling 1 char twice)
 
     bool isWaitingAxieAnimations;
@@ -280,9 +280,9 @@ public class GameManager : MonoBehaviour
         yield return null;
     }
 
-    public void SimulateStep()
+    public async void SimulateStep()
     {
-        Debug.Log("New step " + i++);
+        // Debug.Log("New step " + i++);
 
         if (!isStarted || isFinished) return;
         if (hexGrid == null) return;
@@ -330,35 +330,38 @@ public class GameManager : MonoBehaviour
 
             if (success) continue;
 
-            // 2. Check for possible moving
-            float currentDistanceToCenter = Mathf.Abs(currentTile.HexCoords.x) + Mathf.Abs(currentTile.HexCoords.y) + Mathf.Abs(currentTile.HexCoords.z);
-            foreach (var coordinate in neighbourHexCoordinates)
+            // 2. Check for possible moving (ONLY if attacking axies - defending axies cannot move)
+            if (currentAxie.axieType == AxieType.Attack)
             {
-                // Compromise #1: move towards the center instead of the closest enemy
-
-                HexTile examineTile = hexGrid.GetTileAt(coordinate);
-                if (examineTile == null) continue;                              // invalid tile
-
-                SpineAxieModel possibleAxie = hexGrid.GetAxieAt(examineTile);
-                if (possibleAxie != null) continue;                             // occupied hence cannot move into
-
-                float examineDistanceToCenter = Mathf.Abs(examineTile.HexCoords.x) + Mathf.Abs(examineTile.HexCoords.y) + Mathf.Abs(examineTile.HexCoords.z);
-                if (examineDistanceToCenter >= currentDistanceToCenter)         // if not closer to center, don't move
+                float currentDistanceToCenter = Mathf.Abs(currentTile.HexCoords.x) + Mathf.Abs(currentTile.HexCoords.y) + Mathf.Abs(currentTile.HexCoords.z);
+                foreach (var coordinate in neighbourHexCoordinates)
                 {
-                    continue;
+                    // Compromise #1: move towards the center instead of the closest enemy
+
+                    HexTile examineTile = hexGrid.GetTileAt(coordinate);
+                    if (examineTile == null) continue;                              // invalid tile
+
+                    SpineAxieModel possibleAxie = hexGrid.GetAxieAt(examineTile);
+                    if (possibleAxie != null) continue;                             // occupied hence cannot move into
+
+                    float examineDistanceToCenter = Mathf.Abs(examineTile.HexCoords.x) + Mathf.Abs(examineTile.HexCoords.y) + Mathf.Abs(examineTile.HexCoords.z);
+                    if (examineDistanceToCenter >= currentDistanceToCenter)         // if not closer to center, don't move
+                    {
+                        continue;
+                    }
+
+                    if (moveList.ContainsValue(examineTile)) continue;              // if the tile is already set as destination for another axie, skip
+
+                    // Can move into -> register to handle moving later
+                    TeamSet axieSet = new TeamSet(currentAxie, currentTile);
+                    moveList.Add(axieSet, examineTile);
+
+                    // Set flag for axie
+                    currentAxie.flag = currentFlag;
+
+                    success = true;
+                    break;
                 }
-
-                if (moveList.ContainsValue(examineTile)) continue;              // if the tile is already set as destination for another axie, skip
-
-                // Can move into -> register to handle moving later
-                TeamSet axieSet = new TeamSet(currentAxie, currentTile);
-                moveList.Add(axieSet, examineTile);
-
-                // Set flag for axie
-                currentAxie.flag = currentFlag;
-
-                success = true;
-                break;
             }
 
             if (success) continue;
@@ -371,6 +374,8 @@ public class GameManager : MonoBehaviour
 
         // Update counter: number of axies to wait (for them to finish animation)
         countWaitingAxieAnimations = battlePairs.Count * 2 + moveList.Count;
+        // Debug.Log("Count (" + i + "): " + countWaitingAxieAnimations);
+        // Debug.Log("[" + i + "] Battle: " + battlePairs.Count * 2 + ", Move: " + moveList.Count);
 
         // Simulate battle
         SimulateAttack();
@@ -679,12 +684,3 @@ public class TeamSet
         this.tile = tile;
     }
 }
-
-// [System.Serializable]
-// public class PlaybackControl
-// {
-//     public Button play;
-//     public Button pause;
-//     public Button next;
-//     public Button prev;
-// }

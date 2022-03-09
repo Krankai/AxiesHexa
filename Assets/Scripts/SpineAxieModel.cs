@@ -26,10 +26,10 @@ public class SpineAxieModel : MonoBehaviour
     public int flag = 0;
 
     float moveSpeed = 10f;
-    float attackInterval = 1f;      // default: 0.12f???
+    float attackInterval = 1f;
     float lastAttackTime;
     [HideInInspector]
-    public float fadeOutDuration;       // for dying animation
+    public float dieFadeOutDuration;
 
     public event System.Action AttackEvent;
     public event System.Action DieEvent;
@@ -42,7 +42,7 @@ public class SpineAxieModel : MonoBehaviour
     void Start()
     {
         lastAttackTime = Mathf.NegativeInfinity;
-        fadeOutDuration = 0.4f;
+        dieFadeOutDuration = 0.4f;
         currentHealth = maximumHealth;
         opponentTile = new Vector3Int(99, 99, 99);
 
@@ -56,7 +56,16 @@ public class SpineAxieModel : MonoBehaviour
 
     public bool TryMove(Vector3 destination)
     {
-        if (immovable == true) return false;
+        if (immovable == true)
+        {
+            if (gameManager)
+            {
+                // Debug.Log("[" + axieType + gameManager.i + "] Defense Axie tries to move to: " + destination);
+                gameManager.OnFinishAxieAnimation();
+            }
+            
+            return false;
+        }
 
         StartCoroutine(MoveRoutine(destination));
         return true;
@@ -116,7 +125,7 @@ public class SpineAxieModel : MonoBehaviour
 
         if (gameManager)
         {
-            Debug.Log("[" + axieType + gameManager.i + "] Move to destination: " + destination);
+            // Debug.Log("[" + axieType + gameManager.i + "] Move to destination: " + destination);
             gameManager.OnFinishAxieAnimation();
         }
     }

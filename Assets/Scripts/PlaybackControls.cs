@@ -78,12 +78,6 @@ public class PlaybackControls : MonoBehaviour
             Time.timeScale = 1;
         }
 
-        // scaledTimeFactor += speedUp ? stepTimeScaleFactor : -stepTimeScaleFactor;
-        // scaledTimeFactor = Mathf.Clamp(scaledTimeFactor, -maxTimeScaleFactor, maxTimeScaleFactor);
-
-        //Time.timeScale *= speedUp ? stepTimeScaleFactor : 1f / stepTimeScaleFactor;
-
-
         scaledTimeFactor *= speedUp ? stepTimeScaleFactor : 1f / stepTimeScaleFactor;
         scaledTimeFactor = Mathf.Clamp(scaledTimeFactor, 1f / maxTimeScaleFactor, maxTimeScaleFactor);
         

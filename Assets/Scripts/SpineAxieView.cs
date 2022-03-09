@@ -81,7 +81,7 @@ public class SpineAxieView : MonoBehaviour
             }
             else if (model.gameManager)
             {
-                Debug.Log("[" + model.axieType + model.gameManager.i + "] Attack at position: " + model.gameObject.transform.position);
+                // Debug.Log("[" + model.axieType + model.gameManager.i + "] Attack at position: " + model.gameObject.transform.position);
                 model.gameManager.OnFinishAxieAnimation();
             }
         };
@@ -115,7 +115,7 @@ public class SpineAxieView : MonoBehaviour
 
     IEnumerator DieRoutine()
     {
-        if (model.fadeOutDuration <= 0) yield break;
+        if (model.dieFadeOutDuration <= 0) yield break;
 
         yield return new WaitForSeconds(0.1f);
 
@@ -124,9 +124,9 @@ public class SpineAxieView : MonoBehaviour
             float startAlpha = skeletonAnimation.skeleton.a;
             float endAlpha = 0f;
 
-            for (float t = 0f; t < model.fadeOutDuration; t += Time.deltaTime)
+            for (float t = 0f; t < model.dieFadeOutDuration; t += Time.deltaTime)
             {
-                float normalizedTime = t / model.fadeOutDuration;
+                float normalizedTime = t / model.dieFadeOutDuration;
                 float stepAlpha = Mathf.Lerp(startAlpha, endAlpha, normalizedTime);
 
                 skeletonAnimation.skeleton.a = stepAlpha;               // axie view
@@ -142,7 +142,7 @@ public class SpineAxieView : MonoBehaviour
         //model.state = SpineAxieModelState.Die;
         if (++this.deathSetCounter >= compareDeathCounter && model.gameManager)
         {
-            Debug.Log("[" + model.axieType + model.gameManager.i + "] Die at position: " + model.gameObject.transform.position);
+            // Debug.Log("[" + model.axieType + model.gameManager.i + "] Die at position: " + model.gameObject.transform.position);
             model.gameManager.OnFinishAxieAnimation();
 
             if (model.axieType == AxieType.Defense)
